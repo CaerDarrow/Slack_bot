@@ -20,11 +20,12 @@ app = Flask(__name__)
 #         print("Received {} but was expecting {}".format(request_token, SLACK_VERIFICATION_TOKEN))
 #         return make_response("Request contains invalid Slack verification token", 403)
 
-# The endpoint Slack will send the user's menu selection to
+
 @app.route("/")
 def index():
     return '<h1>Hello!!<h1>'
 
+# The endpoint Slack will send the user's menu selection to
 @app.route("/slack/message_actions", methods=["POST"])
 def message_actions():
 
@@ -49,6 +50,7 @@ def message_actions():
 
     # Send an HTTP 200 response with empty body so Slack knows we're done here
     return make_response("", 200)
+
 
 # Start the Flask server
 if __name__ == "__main__":
