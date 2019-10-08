@@ -13,7 +13,6 @@ slack_client = WebClient(SLACK_BOT_TOKEN)
 
 # Flask webserver for incoming traffic from Slack
 app = Flask(__name__)
-
 # Helper for verifying that requests came from Slack
 # def verify_slack_token(request_token):
 #     if SLACK_VERIFICATION_TOKEN != request_token:
@@ -22,6 +21,10 @@ app = Flask(__name__)
 #         return make_response("Request contains invalid Slack verification token", 403)
 
 # The endpoint Slack will send the user's menu selection to
+@app.route("/")
+def index():
+    return '<b>Hello!!<b/>'
+
 @app.route("/slack/message_actions", methods=["POST"])
 def message_actions():
 
@@ -33,7 +36,6 @@ def message_actions():
 
     # Check to see what the user's selection was and update the message accordingly
     button = form_json["actions"][0]["action_id"]
-    print('123')
     if button == "button1":
         message_text = "cappuccino"
     else:
