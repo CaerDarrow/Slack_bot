@@ -1,1 +1,1 @@
-web: gunicorn app:action_handle
+web: gunicorn -b :$PORT app:action_handle
