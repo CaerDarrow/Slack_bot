@@ -23,7 +23,7 @@ app = Flask(__name__)
 # The endpoint Slack will send the user's menu selection to
 @app.route("/")
 def index():
-    return '<b>Hello!!<b/>'
+    return '<h1>Hello!!<h1>'
 
 @app.route("/slack/message_actions", methods=["POST"])
 def message_actions():
