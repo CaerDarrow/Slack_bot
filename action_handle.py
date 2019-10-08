@@ -39,11 +39,10 @@ def message_actions():
     else:
         message_text = "latte"
 
-    response = slack_client.api_call(
-      "chat.update",
+    response = slack_client.chat_update(
       channel=form_json["channel"]["id"],
       ts=form_json["message_ts"],
-      text="One {}, right coming up! :coffee:".format(message_text),
+      text="One {}, right coming up! :coffee:".format(message_text)
     )
 
     # Send an HTTP 200 response with empty body so Slack knows we're done here
