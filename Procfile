@@ -1,1 +1,1 @@
-server: python3 action_handle.py
+web: gunicorn app:action_handle
