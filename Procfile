@@ -1,1 +1,1 @@
-web: gunicorn action_handle:app
+web: gunicorn app:app
