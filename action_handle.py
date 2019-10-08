@@ -33,7 +33,7 @@ def message_actions():
 
     # Check to see what the user's selection was and update the message accordingly
     button = form_json["actions"][0]["action_id"]
-
+    print('123')
     if button == "button1":
         message_text = "cappuccino"
     else:
