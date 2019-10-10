@@ -6,7 +6,7 @@ class LibraryBot:
         "text": {
             "type": "mrkdwn",
             "text": (
-                "Привет, хоешь почитать? :wave:\n\n"
+                "Привет, хочешь почитать? :wave:\n\n"
             ),
         },
     }
@@ -34,7 +34,7 @@ class LibraryBot:
             "text": "Поиск по названию"
         },
         "accessory": {
-            "type": "multi_external_select",
+            "type": "external_select",
             "action_id": "book_names",
             "placeholder": {
                 "type": "plain_text",

@@ -4,6 +4,7 @@ import asyncio
 import ssl as ssl_lib
 import certifi
 import slack
+import json
 from library_bot import LibraryBot
 
 
@@ -39,6 +40,19 @@ def pin_added(**payload):
         text=f"{str(data['item'])}!",
     )
 
+@slack.RTMClient.run_on(event="star_added")
+async def star_added(**payload):
+    data = payload['data']
+    web_client = payload['web_client']
+    user_id = data['user']
+    #channel_id = data['channel_id']
+    response = await web_client.conversations_open(users=[user_id])
+    channel_id = json.loads(response)["channel"]["id"]
+    await web_client.chat_postMessage(
+        channel=channel_id,
+        text=f"{str(data['item'])}!",
+    )
+
 @slack.RTMClient.run_on(event="message")
 async def message(**payload):
     """Display the onboarding welcome message after receiving a message
@@ -52,14 +66,17 @@ async def message(**payload):
     files = data.get("files")
     if text and text.lower() == "start":
         return await start_bot(web_client, user_id, channel_id)
-    elif files and files[0]["id"] == "FNV8JLNN6":
+    if text and text.lower() == "picture":
+        web_client.files_upload(
+            channels=channel_id,
+            file="file.jpg",
+            title='<slack://user?team=TP74BRUES&id=UP74SGMRC|к боту>'
+        )
+    elif files and files[0]["id"] == "FPA25U8NB":
+        await web_client.conversations_open(users=[user_id])
         await web_client.chat_postMessage(
             channel=channel_id,
             text=f"А, это {files[0]['name']}!",
-        )
-        await web_client.chat_delete(
-            channel=channel_id,
-            ts=data["ts"],
         )
 
 

@@ -34,6 +34,8 @@ def message_options():
         selections = db.get_genres()
     elif form_json["action_id"] == "book_names":
         selections = db.get_book_names()
+    elif form_json["action_id"] == "surnames":
+        selections = db.get_surnames()
     menu_options = {
         "options": [
             {
@@ -62,60 +64,64 @@ def message_actions():
 
     # Verify that the request came from Slack
     # verify_slack_token(form_json["token"])
-
-    # Check to see what the user's selection was and update the message accordingly
     db = LibraryDB()
     book_list = []
     team_id = form_json["team"]["id"]
-    if form_json["actions"][0]["action_id"] == "genres":
-        genres = form_json["actions"][0]["selected_options"]
-        for genre in genres:
+    blocks = form_json["message"]["blocks"]
+    action = form_json["actions"][0]
+    if action["action_id"] == "hide_lib":
+        for section in blocks:
+            if "text" in section.keys() and section["text"]["text"] == action["value"] or\
+            "elements" in section.keys() and section["elements"][0]["value"] == action["value"]:
+                print(section, action["value"])
+                blocks.remove(section)
+    else:
+        selectors = []
+        if action["action_id"] == "genres":
+            selectors = action["selected_options"]
+            books = db.get_book_list_by_genre
+        elif action["action_id"] == "book_names":
+            selectors = [action["selected_option"]]
+            books = db.get_book_list_by_book_name
+        elif action["action_id"] == "surnames":
+            selectors = action["selected_options"]
+            books = db.get_book_list_by_surname
+        for selector in selectors:
+
             book_list += [
-                {
-                    "type": "divider"
-                },
                 {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"*{genre['value']}*"
-                    }
-                },
-                {
-                    "type": "divider"
-                },
-            ]
-            book_list += [
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": f"_{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*\nCейчас в {str(book[5])}" if book[5]
-                        else f"_{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*\nCейчас у {str(book[6])}<slack://user?team={team_id}&id={str(book[7])}|:speech_balloon:>"
-                    }
-                } for book in db.get_book_list_by_genre(genre['value'])
-            ]
-    book_list += [
-        {
-            "type": "actions",
-            "elements": [
-                {
-                    "type": "button",
-                    "text": {
-                        "type": "plain_text",
-                        "text": "Назад",
-                        "emoji": True
+                        "text": f"*{selector['value']}*"
                     },
-                    "value": "click_me_123"
+                    "fields": [
+                        {
+                            "type": "mrkdwn",
+                            "text": f"_{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*\nCейчас в {str(book[5])}" if book[5]
+                            else f"_{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*\nCейчас у {str(book[6])}<slack://user?team={team_id}&id={str(book[7])}|:speech_balloon:>"
+                        } for book in books(selector['value'])]
+                },
+                {
+                    "type": "actions",
+                    "elements": [
+                        {
+                            "action_id": "hide_lib",
+                            "type": "button",
+                            "text": {
+                                "type": "plain_text",
+                                "text": "Скрыть",
+                                "emoji": True
+                            },
+                            "value": f"*{selector['value']}*"
+                        }
+                    ]
                 }
             ]
-        }
-    ]
-    db.close()
     response = slack_client.chat_update(
         channel=form_json["channel"]["id"],
         ts=form_json["message"]["ts"],
-        blocks=book_list,
+        blocks=blocks + book_list,
         as_user=True
     )
 

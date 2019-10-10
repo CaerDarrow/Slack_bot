@@ -15,6 +15,11 @@ class LibraryDB:
             genres = self.cursor.execute("SELECT DISTINCT Genre FROM Library").fetchall()
             return genres
 
+    def get_surnames(self):
+        with self.connection:
+            surnames = self.cursor.execute("SELECT DISTINCT Author_surname FROM Library").fetchall()
+            return surnames
+
     def get_book_names(self):
         with self.connection:
             book_names = self.cursor.execute("SELECT Name FROM Library").fetchall()
@@ -27,6 +32,10 @@ class LibraryDB:
 
     def get_book_list_by_book_name(self, book_name):
         books = self.cursor.execute('SELECT * FROM Library WHERE Name=?', (book_name,)).fetchall()
+        return books
+
+    def get_book_list_by_surname(self, book_name):
+        books = self.cursor.execute('SELECT * FROM Library WHERE Author_surname=?', (book_name,)).fetchall()
         return books
 
     def take_book(self, book_id, user_name):
