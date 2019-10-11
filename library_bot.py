@@ -25,6 +25,7 @@ class LibraryBot:
                 "text": "Искать",
                 "emoji": True
             },
+            "max_selected_items": 5
         }
     }
     SELECT_BY_BOOK_NAME = {
@@ -57,6 +58,7 @@ class LibraryBot:
                 "text": "Искать",
                 "emoji": True
             },
+            "max_selected_items": 5
         }
     }
 
@@ -76,8 +78,8 @@ class LibraryBot:
                 self.WELCOME_BLOCK,
                 self.DIVIDER_BLOCK,
                 self.SELECT_BY_GENRE,
-                self.SELECT_BY_BOOK_NAME,
                 self.SELECT_BY_AUTHOR_SURNAME,
+                self.SELECT_BY_BOOK_NAME,
             ],
         }
 

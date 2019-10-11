@@ -27,32 +27,6 @@ async def start_bot(web_client: slack.WebClient, user_id: str, channel: str):
 # ============== Message Events ============= #
 # When a user sends a DM, the event type will be 'message'.
 # Here we'll link the message callback to the 'message' event.
-@slack.RTMClient.run_on(event="pin_added")
-def pin_added(**payload):
-    """Display the onboarding welcome message after receiving a message
-    that contains "start".
-    """
-    data = payload['data']
-    web_client = payload['web_client']
-    channel_id = data['channel_id']
-    web_client.chat_postMessage(
-        channel=channel_id,
-        text=f"{str(data['item'])}!",
-    )
-
-@slack.RTMClient.run_on(event="star_added")
-async def star_added(**payload):
-    data = payload['data']
-    web_client = payload['web_client']
-    user_id = data['user']
-    #channel_id = data['channel_id']
-    response = await web_client.conversations_open(users=[user_id])
-    channel_id = json.loads(response)["channel"]["id"]
-    await web_client.chat_postMessage(
-        channel=channel_id,
-        text=f"{str(data['item'])}!",
-    )
-
 @slack.RTMClient.run_on(event="message")
 async def message(**payload):
     """Display the onboarding welcome message after receiving a message
@@ -70,7 +44,7 @@ async def message(**payload):
         web_client.files_upload(
             channels=channel_id,
             file="file.jpg",
-            title='<slack://user?team=TP74BRUES&id=UP74SGMRC|к боту>'
+            title='Book about dogge'
         )
     elif files and files[0]["id"] == "FPA25U8NB":
         await web_client.conversations_open(users=[user_id])
@@ -79,6 +53,17 @@ async def message(**payload):
             text=f"А, это {files[0]['name']}!",
         )
 
+
+@slack.RTMClient.run_on(event="im_open")
+async def im_open(**payload):
+    data = payload["data"]
+    web_client = payload["web_client"]
+    channel_id = data.get("channel")
+    user_id = data.get("user")
+    await web_client.chat_postMessage(
+        channel=channel_id,
+        text=f"А, это {user_id}!",
+    )
 
 
 
