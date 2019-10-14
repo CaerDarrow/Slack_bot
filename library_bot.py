@@ -1,6 +1,4 @@
 class LibraryBot:
-    """Constructs the onboarding message and stores the state of which tasks were completed."""
-
     WELCOME_BLOCK = {
         "type": "section",
         "text": {
@@ -19,7 +17,7 @@ class LibraryBot:
         },
         "accessory": {
             "type": "multi_external_select",
-            "action_id": "genres",
+            "action_id": "Genre",
             "placeholder": {
                 "type": "plain_text",
                 "text": "Искать",
@@ -36,7 +34,7 @@ class LibraryBot:
         },
         "accessory": {
             "type": "external_select",
-            "action_id": "book_names",
+            "action_id": "Name",
             "placeholder": {
                 "type": "plain_text",
                 "text": "Искать",
@@ -52,7 +50,7 @@ class LibraryBot:
         },
         "accessory": {
             "type": "multi_external_select",
-            "action_id": "surnames",
+            "action_id": "Author_surname",
             "placeholder": {
                 "type": "plain_text",
                 "text": "Искать",

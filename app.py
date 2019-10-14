@@ -26,15 +26,17 @@ def verify_slack_token(request_token):
 
 @app.route("/slack/message_options", methods=["POST"])
 def message_options():
-    db = LibraryDB()
     form_json = json.loads(request.form["payload"])
+    verify_slack_token(form_json["token"])
+    db = LibraryDB()
     pattern = form_json["value"].lower()
-    if form_json["action_id"] == "genres":
-        selections = db.get_genres()
-    elif form_json["action_id"] == "book_names":
+    if form_json["action_id"] == "Name":
         selections = db.get_book_names()
-    elif form_json["action_id"] == "surnames":
+    elif form_json["action_id"] == "Author_surname":
         selections = db.get_surnames()
+    elif form_json["action_id"] == "Genre":
+        selections = db.get_genres()
+    print(selections)
     menu_options = {
         "options": [
             {
@@ -55,123 +57,123 @@ def message_options():
 # slack://user?team=TP74BRUES&id=UP74SGMRC
 # slack://file?team=TP74BRUES&id=FNV8JLNN6
 
+def build_blocks(action, selector, team_id, start):
+    db = LibraryDB()
+    #books = db.get_book_list_by(action, selector)
+    if action == "Name":
+        books = db.get_book_list_by_book_names(selector)
+    elif action == "Author_surname":
+        books = db.get_book_list_by_surnames(selector)
+    elif action == "Genre":
+        books = db.get_book_list_by_genre(selector)
+    books_count = len(books)
+    if books_count - start > 10:
+        list_b = [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"{selector}"
+                },
+                "accessory": {
+                    "type": "button",
+                    "action_id": f"getmore-{action}",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "Еще..",
+                        "emoji": True
+                    },
+                    "value": f"{selector}-{start + 10}"
+                },
+                "fields": [
+                    {
+                        "type": "mrkdwn",
+                        "text": f"_{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*\nCейчас в {str(book[5])}" if book[
+                            5]
+                        else f"_{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*\nCейчас у @{str(book[6])} <slack://user?team={team_id}&id={str(book[7])}|:speech_balloon:>"
+                    } for book in books[start:min(start + 10, books_count)]]
+            },
+            {
+                "type": "actions",
+                "elements": [
+                    {
+                        "action_id": "hide_lib",
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Скрыть",
+                            "emoji": True
+                        },
+                        "value": f"{selector}"
+                    }
+                ]
+            }
+        ]
+    else:
+        list_b = [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"{selector}"
+                },
+                "fields": [
+                    {
+                        "type": "mrkdwn",
+                        "text": f"_{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*\nCейчас в {str(book[5])}" if book[5]
+                        else f"_{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*\nCейчас у @{str(book[6])} <slack://user?team={team_id}&id={str(book[7])}|:speech_balloon:>"
+                    } for book in books[start:min(start + 10, books_count)]]
+            },
+            {
+                "type": "actions",
+                "elements": [
+                    {
+                        "action_id": "hide_lib",
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Скрыть",
+                            "emoji": True
+                        },
+                        "value": f"{selector}"
+                    }
+                ]
+            }
+        ]
+    return list_b
+
 # The endpoint Slack will send the user's menu selection to
 @app.route("/slack/message_actions", methods=["POST"])
 def message_actions():
-    # Parse the request payload
     form_json = json.loads(request.form["payload"])
-
-    # Verify that the request came from Slack
     verify_slack_token(form_json["token"])
-
-    db = LibraryDB()
     book_list = []
     team_id = form_json["team"]["id"]
     blocks = form_json["message"]["blocks"]
     action = form_json["actions"][0]
-    if action["action_id"] == "get_more":
-        for section in blocks:
-            if action["value"] == section:
-                pass
-    if action["action_id"] == "hide_lib":
+    if action["action_id"].startswith("getmore"):
+        true_action = action["action_id"].split('-')[1]
+        selector, start = action["value"].split('-')
+        blocks = [build_blocks(true_action, selector, team_id, int(start))[0]
+                  if "text" in section.keys() and section["text"]["text"] == selector else section
+                  for section in blocks]
+    elif action["action_id"] == "hide_lib":
         blocks = [section for section in blocks if "text" in section.keys()
                   and section["text"]["text"] != action["value"] or
                   "elements" in section.keys() and
                   section["elements"][0]["value"] != action["value"]]
     else:
-        selectors = []
-        books = None
-        if action["action_id"] == "genres":
-            selectors = action["selected_options"]
-            get_books = db.get_book_list_by_genre
-        elif action["action_id"] == "book_names":
-            selectors = [action["selected_option"]]
-            get_books = db.get_book_list_by_book_name
-        elif action["action_id"] == "surnames":
-            selectors = action["selected_options"]
-            get_books = db.get_book_list_by_surname
+        selectors = [action["selected_option"]] if action["action_id"] == "Name" else action["selected_options"]
         for i in range(len(selectors)):
-            books = get_books(selectors[i]['value'])
-            books_count = len(books)
-            if books_count > 10:
-                book_list += [
-                    {
-                        "type": "section",
-                        "text": {
-                            "type": "mrkdwn",
-                            "text": f"*{selectors[i]['value']}*"
-                        },
-                        "accessory": {
-                            "type": "button",
-                            "action_id": "get_more",
-                            "text": {
-                                "type": "plain_text",
-                                "text": "Еще..",
-                                "emoji": True
-                            },
-                            "value": f"*{selectors[i]['value']}*\t{10}"
-                        },
-                        "fields": [
-                            {
-                                "type": "mrkdwn",
-                                "text": f"_{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*\nCейчас в {str(book[5])}" if book[5]
-                                else f"_{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*\nCейчас у @{str(book[6])} <slack://user?team={team_id}&id={str(book[7])}|:speech_balloon:>"
-                            } for book in books[:min(10, books_count)]]
-                    },
-                    {
-                        "type": "actions",
-                        "elements": [
-                            {
-                                "action_id": "hide_lib",
-                                "type": "button",
-                                "text": {
-                                    "type": "plain_text",
-                                    "text": "Скрыть",
-                                    "emoji": True
-                                },
-                                "value": f"*{selectors[i]['value']}*"
-                            }
-                        ]
-                    }
-                ]
-            else:
-                book_list += [
-                    {
-                        "type": "section",
-                        "text": {
-                            "type": "mrkdwn",
-                            "text": f"*{selectors[i]['value']}*"
-                        },
-                        "fields": [
-                            {
-                                "type": "mrkdwn",
-                                "text": f"_{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*\nCейчас в {str(book[5])}" if book[5]
-                                else f"_{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*\nCейчас у @{str(book[6])} <slack://user?team={team_id}&id={str(book[7])}|:speech_balloon:>"
-                            } for book in books[:min(10, books_count)]]
-                    },
-                    {
-                        "type": "actions",
-                        "elements": [
-                            {
-                                "action_id": "hide_lib",
-                                "type": "button",
-                                "text": {
-                                    "type": "plain_text",
-                                    "text": "Скрыть",
-                                    "emoji": True
-                                },
-                                "value": f"*{selectors[i]['value']}*"
-                            }
-                        ]
-                    }
-                ]
+            list_b = build_blocks(action["action_id"], selectors[i]['value'], team_id, 0)
+            print(list_b)
+            book_list += list_b
     response = slack_client.chat_update(
         channel=form_json["channel"]["id"],
         ts=form_json["message"]["ts"],
         blocks=blocks + book_list,
         as_user=True
     )
-
     # Send an HTTP 200 response with empty body so Slack knows we're done here
     return make_response("", 200)
 

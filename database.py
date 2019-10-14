@@ -25,18 +25,30 @@ class LibraryDB:
             book_names = self.cursor.execute("SELECT Name FROM Library").fetchall()
             return book_names
 
+    def get_selectors(self, action):
+        with self.connection:
+            selectors = self.cursor.execute("SELECT DISTINCT ? FROM Library", (action,)).fetchall()
+            return selectors
+
     def get_book_list_by_genre(self, genre):
         with self.connection:
             genres = self.cursor.execute('SELECT * FROM Library WHERE Genre=?', (genre,)).fetchall()
             return genres
 
-    def get_book_list_by_book_name(self, book_name):
-        books = self.cursor.execute('SELECT * FROM Library WHERE Name=?', (book_name,)).fetchall()
-        return books
+    def get_book_list_by_book_names(self, book_name):
+        with self.connection:
+            books = self.cursor.execute('SELECT * FROM Library WHERE Name=?', (book_name,)).fetchall()
+            return books
 
-    def get_book_list_by_surname(self, book_name):
-        books = self.cursor.execute('SELECT * FROM Library WHERE Author_surname=?', (book_name,)).fetchall()
-        return books
+    def get_book_list_by_surnames(self, book_name):
+        with self.connection:
+            books = self.cursor.execute('SELECT * FROM Library WHERE Author_surname=?', (book_name,)).fetchall()
+            return books
+
+    def get_book_list_by(self, action, selector):
+        with self.connection:
+            books = self.cursor.execute('SELECT * FROM Library WHERE ?=?', (action, selector)).fetchall()
+            return books
 
     def take_book(self, book_id, user_name):
         with self.connection:
