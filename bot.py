@@ -65,7 +65,17 @@ async def im_open(**payload):
         text=f"А, это {user_id}!",
     )
 
-
+@slack.RTMClient.run_on(event="star_added")
+async def star_added(**payload):
+    data = payload["data"]
+    print(data)
+    web_client = payload["web_client"]
+    channel_id = data.get("channel")
+    user_id = data.get("user")
+    await web_client.chat_postMessage(
+        channel=channel_id,
+        text=f"А, это {user_id}!",
+    )
 
 if __name__ == "__main__":
     logger = logging.getLogger()

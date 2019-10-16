@@ -36,7 +36,6 @@ def message_options():
         selections = db.get_surnames()
     elif form_json["action_id"] == "Genre":
         selections = db.get_genres()
-    print(selections)
     menu_options = {
         "options": [
             {
@@ -49,7 +48,6 @@ def message_options():
             } for selection in selections if pattern in selection[0].lower()
         ]
     }
-    db.close()
     return Response(json.dumps(menu_options), mimetype='application/json')
 
 
@@ -59,7 +57,6 @@ def message_options():
 
 def build_blocks(action, selector, team_id, start):
     db = LibraryDB()
-    #books = db.get_book_list_by(action, selector)
     if action == "Name":
         books = db.get_book_list_by_book_names(selector)
     elif action == "Author_surname":
@@ -142,6 +139,24 @@ def build_blocks(action, selector, team_id, start):
         ]
     return list_b
 
+@app.route("/slack/reg_events", methods=["POST"])
+def reg_events():
+    form_json = request.json
+    if 'challenge' in form_json.keys():
+        challenge = form_json['challenge']
+        return Response(challenge, mimetype='text/plain')
+    else:
+        print(form_json)
+        response = slack_client.conversations_open(
+            users=[form_json['event']['user']]
+        )
+        response = slack_client.chat_postMessage(
+            channel=response["channel"]["id"],
+            text='roflanebalo',
+            as_user=True
+        )
+        return make_response("", 200)
+
 # The endpoint Slack will send the user's menu selection to
 @app.route("/slack/message_actions", methods=["POST"])
 def message_actions():
@@ -166,7 +181,6 @@ def message_actions():
         selectors = [action["selected_option"]] if action["action_id"] == "Name" else action["selected_options"]
         for i in range(len(selectors)):
             list_b = build_blocks(action["action_id"], selectors[i]['value'], team_id, 0)
-            print(list_b)
             book_list += list_b
     response = slack_client.chat_update(
         channel=form_json["channel"]["id"],
