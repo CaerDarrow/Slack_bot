@@ -4,6 +4,7 @@ import os
 import json
 from slack import WebClient
 from database import LibraryDB
+from library_bot import LibraryBot
 
 # Your app's Slack bot user token
 SLACK_BOT_TOKEN = os.environ["SLACK_BOT_TOKEN"]
@@ -53,7 +54,7 @@ def message_options():
 
 # bot dialog link:
 # slack://user?team=TP74BRUES&id=UP74SGMRC
-# slack://file?team=TP74BRUES&id=FNV8JLNN6
+# slack://share-file?team=TP74BRUES&id=FPA25U8NB
 
 def build_blocks(action, selector, team_id, start):
     db = LibraryDB()
@@ -139,6 +140,11 @@ def build_blocks(action, selector, team_id, start):
         ]
     return list_b
 
+def start_bot( user_id: str, channel: str):
+    library_bot = LibraryBot(channel)
+    message = library_bot.get_welcome_message()
+    response = slack_client.chat_postMessage(**message)
+
 @app.route("/slack/reg_events", methods=["POST"])
 def reg_events():
     form_json = request.json
@@ -146,15 +152,11 @@ def reg_events():
         challenge = form_json['challenge']
         return Response(challenge, mimetype='text/plain')
     else:
-        print(form_json)
-        response = slack_client.conversations_open(
-            users=[form_json['event']['user']]
-        )
-        response = slack_client.chat_postMessage(
-            channel=response["channel"]["id"],
-            text='roflanebalo',
-            as_user=True
-        )
+        if form_json['event']['type'] == 'message' and 'subtype' not in form_json['event'].keys():
+            user_id = form_json['event']['user']
+            channel_id = form_json['event']['channel']
+            if form_json['event']['text'].lower() == 'start':
+                start_bot(user_id, channel_id)
         return make_response("", 200)
 
 # The endpoint Slack will send the user's menu selection to
