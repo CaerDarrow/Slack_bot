@@ -5,9 +5,7 @@ import json
 from slack import WebClient
 from database import LibraryDB
 from library_bot import LibraryBot
-from pyzbar import pyzbar
-import requests
-from PIL import Image
+
 # Your app's Slack bot user token
 SLACK_BOT_TOKEN = os.environ["SLACK_BOT_TOKEN"]
 SLACK_VERIFICATION_TOKEN = os.environ["SLACK_VERIFICATION_TOKEN"]
@@ -31,26 +29,9 @@ def verify_slack_token(request_token):
 def message_options():
     form_json = json.loads(request.form["payload"])
     verify_slack_token(form_json["token"])
-    db = LibraryDB()
+    builder = LibraryBot()
     pattern = form_json["value"].lower()
-    if form_json["action_id"] == "Name":
-        selections = db.get_book_names()
-    elif form_json["action_id"] == "Author_surname":
-        selections = db.get_surnames()
-    elif form_json["action_id"] == "Genre":
-        selections = db.get_genres()
-    menu_options = {
-        "options": [
-            {
-                "text": {
-                    "type": "plain_text",
-                    "text": selection[0],
-                    "emoji": True
-                },
-                "value": selection[0]
-            } for selection in selections if pattern in selection[0].lower()
-        ]
-    }
+    menu_options = builder.get_menu_options(form_json["action_id"], pattern)
     return Response(json.dumps(menu_options), mimetype='application/json')
 
 
@@ -142,10 +123,16 @@ def build_blocks(action, selector, team_id, start):
         ]
     return list_b
 
-def start_bot(channel: str):
-    library_bot = LibraryBot(channel)
-    message = library_bot.get_welcome_message()
+def start_bot(channel):
+    library_bot = LibraryBot()
+    message = library_bot.get_welcome_message(channel)
     response = slack_client.chat_postMessage(**message)
+
+def send_books(channel, url, user_name, team_id):
+    library_bot = LibraryBot()
+    messages = library_bot.recognize_book(channel, url, user_name, team_id)
+    for message in messages:
+        response = slack_client.chat_postMessage(**message)
 
 @app.route("/slack/reg_events", methods=["POST"])
 def reg_events():
@@ -158,37 +145,10 @@ def reg_events():
         if 'text' in form_json['event'].keys() and form_json['event']['text'].lower() == 'start':
             start_bot(channel_id)
         elif 'files' in form_json['event'].keys():
+            team_id = form_json['team_id']
+            user_id = form_json['event']['user']
             file_url = form_json['event']['files'][0]['thumb_480']
-            response = requests.get(
-                file_url,
-                headers={"Authorization": f"Bearer {SLACK_BOT_TOKEN}"},
-                stream=True
-            ).raw
-            image = Image.open(response)
-            for qr in pyzbar.decode(image):
-                code = qr.data.decode('utf-8')
-                slack_client.chat_postMessage(
-                    channel=channel_id,
-                    blocks=[
-                        {
-                            "type": "section",
-                            "text": {
-                                "type": "mrkdwn",
-                                "text": f"О! Это же {code}, хочешь взять ее?"
-                            },
-                            "accessory": {
-                                "type": "button",
-                                "action_id": "get_book",
-                                "text": {
-                                    "type": "plain_text",
-                                    "text": "Беру!",
-                                    "emoji": True
-                                },
-                                "value": f"{code}"
-                            }
-                        }
-                    ]
-                )
+            send_books(channel_id, file_url, user_id, team_id)
     return make_response("", 200)
 
 # The endpoint Slack will send the user's menu selection to
@@ -337,7 +297,7 @@ def message_actions():
             channel=channel_id,
             ts=ts
         )
-        ts, channel_id, val = action['value'].split('+')
+        ts, channel_id, val = action['value'][1:].split('+')
         blocks = [
             {
                 "type": "section",

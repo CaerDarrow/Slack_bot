@@ -45,6 +45,11 @@ class LibraryDB:
             books = self.cursor.execute('SELECT * FROM Library WHERE Author_surname=?', (book_name,)).fetchall()
             return books
 
+    def get_book_by_id(self, book_id):
+        with self.connection:
+            book = self.cursor.execute('SELECT * FROM Library WHERE id=?', (book_id,)).fetchone()
+            return book
+
     def take_book(self, book_id, user_name, user_id):
         with self.connection:
             self.cursor.execute('UPDATE Library SET Owner=?, Owner_id=?, Cluster=NULL WHERE id=?', (user_name, user_id,
