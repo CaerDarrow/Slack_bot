@@ -1,5 +1,5 @@
 from flask import Flask, request, make_response, Response
-#from flask_ngrok import run_with_ngrok
+from flask_ngrok import run_with_ngrok
 import os
 import json
 from slack import WebClient
@@ -17,7 +17,7 @@ slack_client = WebClient(SLACK_BOT_TOKEN)
 
 # Flask webserver for incoming traffic from Slack
 app = Flask(__name__)
-#run_with_ngrok(app)
+run_with_ngrok(app)
 
 #Helper for verifying that requests came from Slack
 def verify_slack_token(request_token):
@@ -276,11 +276,7 @@ def message_actions():
             }
         ]
     elif action["action_id"] == "approve":
-        slack_client.chat_delete(
-            channel=channel_id,
-            ts=ts
-        )
-        ts, channel_id = action['value'].split('+')
+        ts, channel_id, val = action['value'][1:].split('+')
         blocks = [
             {
                 "type": "section",
@@ -290,6 +286,52 @@ def message_actions():
                 }
             }
         ]
+        slack_client.chat_update(
+            channel=form_json["channel"]["id"],
+            ts=form_json["message"]["ts"],
+            blocks=[
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"Когда дочитаешь книгу, выбери кластер, в который ты хочешь вернуть книгу,"
+                        f"или пользователя, которому ты хочешь ее передать"
+                    }
+                },
+                {
+                    "type": "actions",
+                    "elements": [
+                        {
+                            "type": "static_select",
+                            "action_id": "return_book_to_cluster",
+                            "placeholder": {
+                                "type": "plain_text",
+                                "text": "Выбери кластер",
+                                "emoji": True
+                            },
+                            "options": [
+                                {
+                                    "text": {
+                                        "type": "plain_text",
+                                        "text": cluster,
+                                        "emoji": True
+                                    },
+                                    "value": f"{val}_{cluster}"
+                                } for cluster in ["Atlantis", "Illusion", "Mirage", "Oasis"]]
+                        },
+                        {
+                            "type": "users_select",
+                            "action_id": "return_book_to_user",
+                            "placeholder": {
+                                "type": "plain_text",
+                                "text": "Выбери пользователя",
+                                "emoji": True
+                            }
+                        },
+                    ]
+                }
+            ]
+        )
     elif action["action_id"] == "deny":
         slack_client.chat_delete(
             channel=channel_id,
@@ -349,7 +391,7 @@ def message_actions():
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"{form_json['user']['username']} хочет передать тебе book"
+                        "text": f"@{form_json['user']['username']} хочет передать тебе book"
                     }
                 },
                 {
@@ -364,7 +406,7 @@ def message_actions():
                                 "text": "Принять"
                             },
                             "style": "primary",
-                            "value": f"{ts}+{channel_id}"
+                            "value": f"1{ts}+{channel_id}+{blocks[1]['elements'][0]['options'][0]['value'].split('_')[0]}"
                         },
                         {
                             "type": "button",
@@ -375,7 +417,7 @@ def message_actions():
                                 "text": "Отклонить"
                             },
                             "style": "danger",
-                            "value": f"{ts}+{channel_id}+{blocks[1]['elements'][0]['options'][0]['value'].split('_')[0]}"
+                            "value": f"2{ts}+{channel_id}+{blocks[1]['elements'][0]['options'][0]['value'].split('_')[0]}"
                         }
                     ]
                 }
