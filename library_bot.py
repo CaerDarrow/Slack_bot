@@ -64,11 +64,9 @@ class LibraryBot:
         self.channel = channel
         self.username = "library_bot"
         self.icon_emoji = ":robot_face:"
-        self.timestamp = ""
 
     def get_welcome_message(self):
         return {
-            "ts": self.timestamp,
             "channel": self.channel,
             "username": self.username,
             "icon_emoji": self.icon_emoji,

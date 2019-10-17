@@ -45,18 +45,15 @@ class LibraryDB:
             books = self.cursor.execute('SELECT * FROM Library WHERE Author_surname=?', (book_name,)).fetchall()
             return books
 
-    def get_book_list_by(self, action, selector):
+    def take_book(self, book_id, user_name, user_id):
         with self.connection:
-            books = self.cursor.execute('SELECT * FROM Library WHERE ?=?', (action, selector)).fetchall()
-            return books
+            self.cursor.execute('UPDATE Library SET Owner=?, Owner_id=?, Cluster=NULL WHERE id=?', (user_name, user_id,
+                                                                                                    book_id))
 
-    def take_book(self, book_id, user_name):
+    def return_book(self, book_id, cluster):
         with self.connection:
-            self.cursor.execute('UPDATE Library SET Owner=? WHERE id=?', (user_name, book_id))
-
-    def return_book(self, book_id):
-        with self.connection:
-            self.cursor.execute('UPDATE Library SET Owner=NULL WHERE id=?', (book_id,))
+            self.cursor.execute('UPDATE Library SET Owner=NULL, Owner_id=NULL, Cluster=? WHERE id=?', (cluster,
+                                                                                                       book_id))
 
     def close(self):
         self.connection.close()

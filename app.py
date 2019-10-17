@@ -1,11 +1,13 @@
 from flask import Flask, request, make_response, Response
-from flask_ngrok import run_with_ngrok
+#from flask_ngrok import run_with_ngrok
 import os
 import json
 from slack import WebClient
 from database import LibraryDB
 from library_bot import LibraryBot
-
+from pyzbar import pyzbar
+import requests
+from PIL import Image
 # Your app's Slack bot user token
 SLACK_BOT_TOKEN = os.environ["SLACK_BOT_TOKEN"]
 SLACK_VERIFICATION_TOKEN = os.environ["SLACK_VERIFICATION_TOKEN"]
@@ -15,7 +17,7 @@ slack_client = WebClient(SLACK_BOT_TOKEN)
 
 # Flask webserver for incoming traffic from Slack
 app = Flask(__name__)
-run_with_ngrok(app)
+#run_with_ngrok(app)
 
 #Helper for verifying that requests came from Slack
 def verify_slack_token(request_token):
@@ -86,9 +88,9 @@ def build_blocks(action, selector, team_id, start):
                 "fields": [
                     {
                         "type": "mrkdwn",
-                        "text": f"_{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*\nCейчас в {str(book[5])}" if book[
-                            5]
-                        else f"_{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*\nCейчас у @{str(book[6])} <slack://user?team={team_id}&id={str(book[7])}|:speech_balloon:>"
+                        "text": f"_{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*\nCейчас в {str(book[5])}" if book[5]
+                        else f"_{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*\nCейчас у @{str(book[6])}"
+                        f"<slack://user?team={team_id}&id={str(book[7])}|:speech_balloon:>"
                     } for book in books[start:min(start + 10, books_count)]]
             },
             {
@@ -140,7 +142,7 @@ def build_blocks(action, selector, team_id, start):
         ]
     return list_b
 
-def start_bot( user_id: str, channel: str):
+def start_bot(channel: str):
     library_bot = LibraryBot(channel)
     message = library_bot.get_welcome_message()
     response = slack_client.chat_postMessage(**message)
@@ -151,13 +153,43 @@ def reg_events():
     if 'challenge' in form_json.keys():
         challenge = form_json['challenge']
         return Response(challenge, mimetype='text/plain')
-    else:
-        if form_json['event']['type'] == 'message' and 'subtype' not in form_json['event'].keys():
-            user_id = form_json['event']['user']
-            channel_id = form_json['event']['channel']
-            if form_json['event']['text'].lower() == 'start':
-                start_bot(user_id, channel_id)
-        return make_response("", 200)
+    elif form_json['event']['type'] == 'message':
+        channel_id = form_json['event']['channel']
+        if 'text' in form_json['event'].keys() and form_json['event']['text'].lower() == 'start':
+            start_bot(channel_id)
+        elif 'files' in form_json['event'].keys():
+            file_url = form_json['event']['files'][0]['thumb_480']
+            response = requests.get(
+                file_url,
+                headers={"Authorization": f"Bearer {SLACK_BOT_TOKEN}"},
+                stream=True
+            ).raw
+            image = Image.open(response)
+            for qr in pyzbar.decode(image):
+                code = qr.data.decode('utf-8')
+                slack_client.chat_postMessage(
+                    channel=channel_id,
+                    blocks=[
+                        {
+                            "type": "section",
+                            "text": {
+                                "type": "mrkdwn",
+                                "text": f"О! Это же {code}, хочешь взять ее?"
+                            },
+                            "accessory": {
+                                "type": "button",
+                                "action_id": "get_book",
+                                "text": {
+                                    "type": "plain_text",
+                                    "text": "Беру!",
+                                    "emoji": True
+                                },
+                                "value": f"{code}"
+                            }
+                        }
+                    ]
+                )
+    return make_response("", 200)
 
 # The endpoint Slack will send the user's menu selection to
 @app.route("/slack/message_actions", methods=["POST"])
@@ -167,6 +199,8 @@ def message_actions():
     book_list = []
     team_id = form_json["team"]["id"]
     blocks = form_json["message"]["blocks"]
+    ts = form_json["message"]["ts"]
+    channel_id = form_json["channel"]["id"]
     action = form_json["actions"][0]
     if action["action_id"].startswith("getmore"):
         true_action = action["action_id"].split('-')[1]
@@ -174,6 +208,180 @@ def message_actions():
         blocks = [build_blocks(true_action, selector, team_id, int(start))[0]
                   if "text" in section.keys() and section["text"]["text"] == selector else section
                   for section in blocks]
+    elif action["action_id"] == "get_book":
+        db = LibraryDB()
+        db.take_book(action["value"], form_json['user']['username'], form_json['user']['id'])
+        blocks = [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"Когда дочитаешь книгу, выбери кластер, в который ты хочешь вернуть книгу,"
+                    f"или пользователя, которому ты хочешь ее передать"
+                },
+            },
+            {
+                "type": "actions",
+                "elements": [
+                    {
+                        "type": "static_select",
+                        "action_id": "return_book_to_cluster",
+                        "placeholder": {
+                            "type": "plain_text",
+                            "text": "Выбери кластер",
+                            "emoji": True
+                        },
+                        "options": [
+                            {
+                                "text": {
+                                    "type": "plain_text",
+                                    "text": cluster,
+                                    "emoji": True
+                                },
+                                "value": f"{action['value']}_{cluster}"
+                            } for cluster in ["Atlantis", "Illusion", "Mirage", "Oasis"]]
+                    },
+                    {
+                        "type": "users_select",
+                        "action_id": "return_book_to_user",
+                        "placeholder": {
+                            "type": "plain_text",
+                            "text": "Выбери пользователя",
+                            "emoji": True
+                        }
+                    },
+                ]
+            },
+            {
+                "type": "context",
+                "elements": [
+                    {
+                        "type": "mrkdwn",
+                        "text": "Чтобы получить это сообщение просто сосканируй QR-код еще раз"
+                    }
+                ]
+            },
+        ]
+    elif action["action_id"] == "return_book_to_cluster":
+        db = LibraryDB()
+        book_id, cluster = action["selected_option"]["value"].split('_')
+        db.return_book(book_id, cluster)
+        blocks = [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"Спасибо!"
+                }
+            }
+        ]
+    elif action["action_id"] == "approve":
+        slack_client.chat_delete(
+            channel=channel_id,
+            ts=ts
+        )
+        ts, channel_id = action['value'].split('+')
+        blocks = [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"Спасибо, книга теперь у @{form_json['user']['username']}!"
+                }
+            }
+        ]
+    elif action["action_id"] == "deny":
+        slack_client.chat_delete(
+            channel=channel_id,
+            ts=ts
+        )
+        ts, channel_id, val = action['value'].split('+')
+        blocks = [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"Извини, но @{form_json['user']['username']} отклонил запрос( попробуй еще раз."
+                }
+            },
+            {
+                "type": "actions",
+                "elements": [
+                    {
+                        "type": "static_select",
+                        "action_id": "return_book_to_cluster",
+                        "placeholder": {
+                            "type": "plain_text",
+                            "text": "Выбери кластер",
+                            "emoji": True
+                        },
+                        "options": [
+                            {
+                                "text": {
+                                    "type": "plain_text",
+                                    "text": cluster,
+                                    "emoji": True
+                                },
+                                "value": f"{val}_{cluster}"
+                            } for cluster in ["Atlantis", "Illusion", "Mirage", "Oasis"]]
+                    },
+                    {
+                        "type": "users_select",
+                        "action_id": "return_book_to_user",
+                        "placeholder": {
+                            "type": "plain_text",
+                            "text": "Выбери пользователя",
+                            "emoji": True
+                        }
+                    },
+                ]
+            }
+        ]
+    elif action["action_id"] == "return_book_to_user":
+        user = action['selected_user']
+        #db = LibraryDB()
+        response = slack_client.conversations_open(users=[user])
+        channel = response['channel']['id']
+        response = slack_client.chat_postMessage(
+            channel=channel,
+            blocks=[
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"{form_json['user']['username']} хочет передать тебе book"
+                    }
+                },
+                {
+                    "type": "actions",
+                    "elements": [
+                        {
+                            "type": "button",
+                            "action_id": "approve",
+                            "text": {
+                                "type": "plain_text",
+                                "emoji": True,
+                                "text": "Принять"
+                            },
+                            "style": "primary",
+                            "value": f"{ts}+{channel_id}"
+                        },
+                        {
+                            "type": "button",
+                            "action_id": "deny",
+                            "text": {
+                                "type": "plain_text",
+                                "emoji": True,
+                                "text": "Отклонить"
+                            },
+                            "style": "danger",
+                            "value": f"{ts}+{channel_id}+{blocks[1]['elements'][0]['options'][0]['value'].split('_')[0]}"
+                        }
+                    ]
+                }
+            ]
+        )
+
     elif action["action_id"] == "hide_lib":
         blocks = [section for section in blocks if "text" in section.keys()
                   and section["text"]["text"] != action["value"] or
@@ -185,8 +393,8 @@ def message_actions():
             list_b = build_blocks(action["action_id"], selectors[i]['value'], team_id, 0)
             book_list += list_b
     response = slack_client.chat_update(
-        channel=form_json["channel"]["id"],
-        ts=form_json["message"]["ts"],
+        channel=channel_id,
+        ts=ts,
         blocks=blocks + book_list,
         as_user=True
     )
