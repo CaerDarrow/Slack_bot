@@ -1,234 +1,154 @@
-from database import LibraryDB
-from pyzbar import pyzbar
-import requests
+from block_kit import BlockKit
+from slack import WebClient
 import os
-from PIL import Image
+from flask import Flask, request, make_response, Response
+import requests
+import qrcode
+from io import BytesIO
 
-class LibraryBot:
-    WELCOME_BLOCK = {
-        "type": "section",
-        "text": {
-            "type": "mrkdwn",
-            "text": (
-                "Привет, хочешь почитать? :wave:\n\n"
-            ),
-        },
-    }
-    DIVIDER_BLOCK = {"type": "divider"}
-    SELECT_BY_GENRE = {
-        "type": "section",
-        "text": {
-            "type": "mrkdwn",
-            "text": "Поиск по жанрам"
-        },
-        "accessory": {
-            "type": "multi_external_select",
-            "action_id": "Genre",
-            "placeholder": {
-                "type": "plain_text",
-                "text": "Искать",
-                "emoji": True
-            },
-            "max_selected_items": 5
-        }
-    }
-    SELECT_BY_BOOK_NAME = {
-        "type": "section",
-        "text": {
-            "type": "mrkdwn",
-            "text": "Поиск по названию"
-        },
-        "accessory": {
-            "type": "external_select",
-            "action_id": "Name",
-            "placeholder": {
-                "type": "plain_text",
-                "text": "Искать",
-                "emoji": True
-            },
-        }
-    }
-    SELECT_BY_AUTHOR_SURNAME = {
-        "type": "section",
-        "text": {
-            "type": "mrkdwn",
-            "text": "Поиск по фамилии"
-        },
-        "accessory": {
-            "type": "multi_external_select",
-            "action_id": "Author_surname",
-            "placeholder": {
-                "type": "plain_text",
-                "text": "Искать",
-                "emoji": True
-            },
-            "max_selected_items": 5
-        }
-    }
+class LibraryBot(BlockKit):
     SLACK_BOT_TOKEN = os.environ["SLACK_BOT_TOKEN"]
+    SLACK_VERIFICATION_TOKEN = os.environ["SLACK_VERIFICATION_TOKEN"]
 
     def __init__(self):
-        self.username = "library_bot"
-        self.icon_emoji = ":robot_face:"
-        self.db = LibraryDB()
+        BlockKit.__init__(self)
+        # Slack client for Web API requests
+        self.slack_client = WebClient(self.SLACK_BOT_TOKEN)
 
-    def get_welcome_message(self, channel):
-        return {
-            "channel": channel,
-            "username": self.username,
-            "icon_emoji": self.icon_emoji,
-            "blocks": [
-                self.WELCOME_BLOCK,
-                self.DIVIDER_BLOCK,
-                self.SELECT_BY_GENRE,
-                self.SELECT_BY_AUTHOR_SURNAME,
-                self.SELECT_BY_BOOK_NAME,
-            ],
-        }
+    # Verifying that requests came from Slack
+    def verify_slack_token(self, request_token):
+        if self.SLACK_VERIFICATION_TOKEN != request_token:
+            print("Error: invalid verification token!")
+            print("Received {} but was expecting {}".format(request_token, self.SLACK_VERIFICATION_TOKEN))
+            return make_response("Request contains invalid Slack verification token", 403)
 
-    def get_menu_options(self, action, pattern):
-        if action == "Name":
-            selections = self.db.get_book_names()
-        elif action == "Author_surname":
-            selections = self.db.get_surnames()
-        elif action == "Genre":
-            selections = self.db.get_genres()
-        menu_options = {
-            "options": [
-                {
-                    "text": {
-                        "type": "plain_text",
-                        "text": selection[0],
-                        "emoji": True
-                    },
-                    "value": selection[0]
-                } for selection in selections if pattern in selection[0].lower()
-            ]
-        }
-        return menu_options
+    def start_bot(self, channel_id):
+        blocks = self.get_welcome_message()
+        response = self.slack_client.chat_postMessage(
+            icon_emoji=":robot_face:",
+            channel=channel_id,
+            blocks=blocks,
+        )
 
-    def recognize_book(self, channel, url, user_id, team_id):
-        messages = []
+    def send_books(self, channel_id, url, user_name, team_id):
         response = requests.get(
             url,
             headers={"Authorization": f"Bearer {self.SLACK_BOT_TOKEN}"},
             stream=True
         ).raw
-        image = Image.open(response)
-        for qr in pyzbar.decode(image):
-            code = qr.data.decode('utf-8')
-            book = self.db.get_book_by_id(code)
-            if book[5]:
-                messages += [
-                    {
-                        "channel": channel,
-                        "blocks": [
-                            {
-                                "type": "section",
-                                "text": {
-                                    "type": "mrkdwn",
-                                    "text": f"О! Это же _{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*, хочешь взять ее?"
-                                },
-                                "accessory": {
-                                    "type": "button",
-                                    "action_id": "get_book",
-                                    "text": {
-                                        "type": "plain_text",
-                                        "text": "Беру!",
-                                        "emoji": True
-                                    },
-                                    "value": f"{code}"
-                                }
-                            }
-                        ]
-                    }
-                ]
-            elif str(book[7]) != user_id:
-                messages += [
-                    {
-                        "channel": channel,
-                        "blocks": [
-                            {
-                                "type": "section",
-                                "text": {
-                                    "type": "mrkdwn",
-                                    "text": f"А, это _{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*, кажется @{str(book[6])}"
-                    f"забыл вернуть ее, напиши ему, пожалуйста <slack://user?team={team_id}&id={str(book[7])}|:speech_balloon:>"
-                                },
-                            }
-                        ]
-                    }
-                ]
-            else:
-                messages += [
-                    {
-                        "channel": channel,
-                        "blocks": [
-                            {
-                                "type": "section",
-                                "text": {
-                                    "type": "mrkdwn",
-                                    "text": f"Когда дочитаешь книгу, выбери кластер, в который ты хочешь вернуть книгу,"
-                                    f"или пользователя, которому ты хочешь ее передать"
-                                },
-                            },
-                            {
-                                "type": "actions",
-                                "elements": [
-                                    {
-                                        "type": "static_select",
-                                        "action_id": "return_book_to_cluster",
-                                        "placeholder": {
-                                            "type": "plain_text",
-                                            "text": "Выбери кластер",
-                                            "emoji": True
-                                        },
-                                        "options": [
-                                            {
-                                                "text": {
-                                                    "type": "plain_text",
-                                                    "text": cluster,
-                                                    "emoji": True
-                                                },
-                                                "value": f"{code}_{cluster}"
-                                            } for cluster in ["Atlantis", "Illusion", "Mirage", "Oasis"]]
-                                    },
-                                    {
-                                        "type": "users_select",
-                                        "action_id": "return_book_to_user",
-                                        "placeholder": {
-                                            "type": "plain_text",
-                                            "text": "Выбери пользователя",
-                                            "emoji": True
-                                        }
-                                    },
-                                ]
-                            },
-                            {
-                                "type": "context",
-                                "elements": [
-                                    {
-                                        "type": "mrkdwn",
-                                        "text": "Чтобы получить это сообщение просто сосканируй QR-код еще раз"
-                                    }
-                                ]
-                            },
-                        ]
-                    }
-                ]
-        if not messages:
-            messages = [
-                {
-                    "channel": channel,
-                    "blocks": [
-                        {
-                            "type": "section",
-                            "text": {
-                                "type": "mrkdwn",
-                                "text": f"Я не знаю что это(, попробуй еще раз."
-                            }
-                        }
-                    ]
-                }
-            ]
-        return messages
+        blocks = self.recognize_book(response, user_name, team_id)
+        response = self.slack_client.chat_postMessage(
+            icon_emoji=":robot_face:",
+            channel=channel_id,
+            blocks=blocks
+        )
+
+    def show_more_books(self, channel_id, ts, blocks, action_id, action_value, team_id):
+        blocks = self.get_more_books(action_id, action_value, blocks, team_id)
+        response = self.slack_client.chat_update(
+            channel=channel_id,
+            ts=ts,
+            blocks=blocks,
+            as_user=True
+        )
+
+    def user_get_book(self, channel_id, ts, action_value, user_name, user_id):
+        blocks = self.get_book(action_value, user_name, user_id)
+        response = self.slack_client.chat_update(
+            channel=channel_id,
+            ts=ts,
+            blocks=blocks,
+            as_user=True
+        )
+
+    def user_return_book_to_cluster(self, channel_id, ts, action_value):
+        blocks = self.return_book_to_cluster(action_value)
+        response = self.slack_client.chat_update(
+            channel=channel_id,
+            ts=ts,
+            blocks=blocks,
+            as_user=True
+        )
+
+    def user_approve_book(self, ts, channel_id, val, user_name):
+        blocks = self.approve_book(user_name, val)
+        response = self.slack_client.chat_update(
+            channel=channel_id,
+            ts=ts,
+            blocks=blocks,
+            as_user=True
+        )
+
+    def user_deny_book(self, ts, channel_id, val, user_name):
+        blocks = self.deny_book(user_name, val)
+        response = self.slack_client.chat_update(
+            channel=channel_id,
+            ts=ts,
+            blocks=blocks,
+            as_user=True
+        )
+
+    def delete_message(self, ts, channel_id):
+        self.slack_client.chat_delete(
+            channel=channel_id,
+            ts=ts
+        )
+
+    def user_return_book_to_user(self, ts, channel_id, user, user_name, val):
+        blocks = self.return_book_to_user(ts, channel_id, val, user_name)
+        response = self.slack_client.conversations_open(users=[user])
+        channel = response['channel']['id']
+        response = self.slack_client.chat_postMessage(
+            icon_emoji=":robot_face:",
+            channel=channel,
+            blocks=blocks
+        )
+
+    def user_hide_books(self, ts, channel_id, blocks, action_value):
+        blocks = self.hide_books(action_value, blocks)
+        response = self.slack_client.chat_update(
+            channel=channel_id,
+            ts=ts,
+            blocks=blocks,
+            as_user=True
+        )
+
+    def show_books_to_user(self, ts, channel_id, selectors, blocks, team_id, action_id):
+        blocks = blocks + self.show_books(selectors, action_id, team_id)
+        response = self.slack_client.chat_update(
+            channel=channel_id,
+            ts=ts,
+            blocks=blocks,
+            as_user=True
+        )
+
+    def add_book_dialog(self, trigger_id):
+        response = self.slack_client.views_open(
+            trigger_id=trigger_id,
+            view=self.add_book()
+        )
+
+    def add_genre_dialog(self, view_id):
+        response = self.slack_client.views_update(
+            view_id=view_id,
+            view=self.add_genre()
+        )
+
+    def new_book(self, user_id, book_name, author_info, genre, cluster):
+        info = author_info.split()
+        author_surname, author_initials = info[0], info[1] if len(info) == 2 else ''
+        book_id = self.db.add_book(author_surname.capitalize(), author_initials, book_name.capitalize(), genre.lower(), cluster)
+        response = self.slack_client.conversations_open(users=[user_id])
+        channel_id = response['channel']['id']
+        img = qrcode.make(book_id)
+        bio = BytesIO()
+        bio.name = f'{book_name}.jpeg'
+        img.save(bio, 'JPEG')
+        bio.seek(0)
+        response = self.slack_client.files_upload(
+            channels=channel_id,
+            file=bio,
+            title=f"{book_name}",
+            initial_comment=f"_{author_info}_ *'{book_name}'* добавлена, распечатай"
+            f" этот код и наклей на книгу! И не забудь отнести ее в {cluster}"
+        )
