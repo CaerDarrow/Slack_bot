@@ -124,7 +124,9 @@ class BlockKit:
         return blocks
 
     def get_welcome_message(self):
-        selections = self.db.get_genres()
+        selections = self.db.get_book_names()
+        selections += self.db.get_surnames()
+        selections += self.db.get_genres()
         return [
             self.WELCOME_BLOCK,
             self.DIVIDER_BLOCK,
