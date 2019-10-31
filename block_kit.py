@@ -70,32 +70,6 @@ class BlockKit:
         self.username = "library_bot"
         self.icon_emoji = ":robot_face:"
         self.db = LibraryDB()
-        self.selections = self.db.get_genres()
-        self.SELECT_BY_TAG = {
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": "Поиск по фамилии"
-            },
-            "accessory": {
-                "type": "multi_static_select",
-                "action_id": "Name",
-                "placeholder": {
-                    "type": "plain_text",
-                    "text": "Поиск...",
-                    "emoji": True
-                },
-                "options": [
-                    {
-                        "text": {
-                            "type": "plain_text",
-                            "text": selection[0],
-                            "emoji": True
-                        },
-                        "value": selection[0]
-                    } for selection in self.selections]
-            }
-        }
 
     def recognize_book(self, response, user_id, team_id):
         blocks = []
@@ -150,12 +124,35 @@ class BlockKit:
         return blocks
 
     def get_welcome_message(self):
+        selections = self.db.get_genres()
         return [
             self.WELCOME_BLOCK,
             self.DIVIDER_BLOCK,
-            self.SELECT_BY_TAG,
-            # self.SELECT_BY_AUTHOR_SURNAME,
-            # self.SELECT_BY_BOOK_NAME,
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": "Поиск по тегу, названию, автору"
+                },
+                "accessory": {
+                    "type": "multi_static_select",
+                    "action_id": "Name",
+                    "placeholder": {
+                        "type": "plain_text",
+                        "text": "Поиск...",
+                        "emoji": True
+                    },
+                    "options": [
+                        {
+                            "text": {
+                                "type": "plain_text",
+                                "text": selection[0],
+                                "emoji": True
+                            },
+                            "value": selection[0]
+                        } for selection in selections]
+                }
+            }
         ]
 
     def get_menu_options(self, action, pattern):
