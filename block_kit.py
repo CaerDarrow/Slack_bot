@@ -1,5 +1,5 @@
 from database import LibraryDB
-# from pyzbar import pyzbar
+from pyzbar import pyzbar
 from PIL import Image
 
 
@@ -14,6 +14,7 @@ class BlockKit:
         },
     }
     DIVIDER_BLOCK = {"type": "divider"}
+
     SELECT_BY_GENRE = {
         "type": "section",
         "text": {
@@ -31,104 +32,130 @@ class BlockKit:
             "max_selected_items": 5
         }
     }
-    SELECT_BY_BOOK_NAME = {
-        "type": "section",
-        "text": {
-            "type": "mrkdwn",
-            "text": "Поиск по названию"
-        },
-        "accessory": {
-            "type": "external_select",
-            "action_id": "Name",
-            "placeholder": {
-                "type": "plain_text",
-                "text": "Искать",
-                "emoji": True
-            },
-        }
-    }
-    SELECT_BY_AUTHOR_SURNAME = {
-        "type": "section",
-        "text": {
-            "type": "mrkdwn",
-            "text": "Поиск по фамилии"
-        },
-        "accessory": {
-            "type": "multi_external_select",
-            "action_id": "Author_surname",
-            "placeholder": {
-                "type": "plain_text",
-                "text": "Искать",
-                "emoji": True
-            },
-            "max_selected_items": 5
-        }
-    }
+    # SELECT_BY_BOOK_NAME = {
+    #     "type": "section",
+    #     "text": {
+    #         "type": "mrkdwn",
+    #         "text": "Поиск по названию"
+    #     },
+    #     "accessory": {
+    #         "type": "external_select",
+    #         "action_id": "Name",
+    #         "placeholder": {
+    #             "type": "plain_text",
+    #             "text": "Искать",
+    #             "emoji": True
+    #         },
+    #     }
+    # }
+    # SELECT_BY_AUTHOR_SURNAME = {
+    #     "type": "section",
+    #     "text": {
+    #         "type": "mrkdwn",
+    #         "text": "Поиск по фамилии"
+    #     },
+    #     "accessory": {
+    #         "type": "multi_external_select",
+    #         "action_id": "Author_surname",
+    #         "placeholder": {
+    #             "type": "plain_text",
+    #             "text": "Искать",
+    #             "emoji": True
+    #         },
+    #         "max_selected_items": 5
+    #     }
+    # }
 
     def __init__(self):
         self.username = "library_bot"
         self.icon_emoji = ":robot_face:"
         self.db = LibraryDB()
+        self.selections = self.db.get_genres()
+        self.SELECT_BY_TAG = {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "Поиск по фамилии"
+            },
+            "accessory": {
+                "type": "multi_static_select",
+                "action_id": "Name",
+                "placeholder": {
+                    "type": "plain_text",
+                    "text": "Поиск...",
+                    "emoji": True
+                },
+                "options": [
+                    {
+                        "text": {
+                            "type": "plain_text",
+                            "text": selection[0],
+                            "emoji": True
+                        },
+                        "value": selection[0]
+                    } for selection in self.selections]
+            }
+        }
 
     def recognize_book(self, response, user_id, team_id):
         blocks = []
         image = Image.open(response)
-        # for qr in pyzbar.decode(image):
-        #     code = qr.data.decode('utf-8')
-        #     book = self.db.get_book_by_id(code)
-        #     if book[5]:
-        #         blocks += [
-        #             {
-        #                 "type": "section",
-        #                 "text": {
-        #                     "type": "mrkdwn",
-        #                     "text": f"О! Это же _{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*, хочешь взять ее?"
-        #                 },
-        #                 "accessory": {
-        #                     "type": "button",
-        #                     "action_id": "get_book",
-        #                     "text": {
-        #                         "type": "plain_text",
-        #                         "text": "Беру!",
-        #                         "emoji": True
-        #                     },
-        #                     "value": f"{code}"
-        #                 }
-        #             }
-        #         ]
-        #     elif str(book[7]) != user_id:
-        #         blocks = [
-        #             {
-        #                 "type": "section",
-        #                 "text": {
-        #                     "type": "mrkdwn",
-        #                     "text": f"А, это _{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*, кажется @{str(book[6])}"
-        #                     f"забыл вернуть ее, напиши ему, пожалуйста <slack://user?team={team_id}&id={str(book[7])}|:speech_balloon:>"
-        #                 },
-        #             }
-        #         ]
-        #     else:
-        #         blocks += self.get_return_book_block(code)
-        #
-        # if not blocks:
-        #     blocks = [
-        #         {
-        #             "type": "section",
-        #             "text": {
-        #                 "type": "mrkdwn",
-        #                 "text": f"Я не знаю что это(, попробуй еще раз."
-        #             }
-        #         }
-        #     ]
+        for qr in pyzbar.decode(image):
+            code = qr.data.decode('utf-8')
+            book = self.db.get_book_by_id(code)
+            if book[5]:
+                blocks += [
+                    {
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": f"О! Это же _{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*, хочешь взять ее?"
+                        },
+                        "accessory": {
+                            "type": "button",
+                            "action_id": "get_book",
+                            "text": {
+                                "type": "plain_text",
+                                "text": "Беру!",
+                                "emoji": True
+                            },
+                            "value": f"{code}"
+                        }
+                    }
+                ]
+            elif str(book[7]) != user_id:
+                blocks = [
+                    {
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": f"А, это _{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*, кажется @{str(book[6])}"
+                            f"забыл вернуть ее, напиши ему, пожалуйста <slack://user?team={team_id}&id={str(book[7])}|:speech_balloon:>"
+                        },
+                    }
+                ]
+            else:
+                blocks += self.get_return_book_block(code)
+
+        if not blocks:
+            blocks = [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"Я не знаю что это(, попробуй еще раз."
+                    }
+                }
+            ]
         return blocks
 
     def get_welcome_message(self):
         return [
             self.WELCOME_BLOCK,
             self.DIVIDER_BLOCK,
-            self.SELECT_BY_GENRE,
-            self.SELECT_BY_AUTHOR_SURNAME,
-            self.SELECT_BY_BOOK_NAME,
+            self.SELECT_BY_TAG,
+            # self.SELECT_BY_AUTHOR_SURNAME,
+            # self.SELECT_BY_BOOK_NAME,
         ]
 
     def get_menu_options(self, action, pattern):

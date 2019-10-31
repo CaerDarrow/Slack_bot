@@ -8,13 +8,13 @@ app = Flask(__name__)
 run_with_ngrok(app)
 bot = LibraryBot()
 
-@app.route("/slack/message_options", methods=["POST"])
-def message_options():
-    form_json = json.loads(request.form["payload"])
-    bot.verify_slack_token(form_json["token"])
-    pattern = form_json["value"].lower()
-    menu_options = bot.get_menu_options(form_json["action_id"], pattern)
-    return Response(json.dumps(menu_options), mimetype='application/json')
+# @app.route("/slack/message_options", methods=["POST"])
+# def message_options():
+#     form_json = json.loads(request.form["payload"])
+#     bot.verify_slack_token(form_json["token"])
+#     pattern = form_json["value"].lower()
+#     menu_options = bot.get_menu_options(form_json["action_id"], pattern)
+#     return Response(json.dumps(menu_options), mimetype='application/json')
 
 @app.route("/slack/reg_events", methods=["POST"])
 def reg_events():
@@ -49,28 +49,20 @@ def message_actions():
     form_json = json.loads(request.form["payload"])
     bot.verify_slack_token(form_json["token"])
     team_id = form_json["team"]["id"]
-    if form_json['type'] == 'view_submission':
-        values = form_json['view']['state']['values']
-        book_name = values['book_name']['book_name']['value']
-        author_info = values['author_info']['author_info']['value']
-        genre = values['genre']['genre']['value'] if 'value' in values['genre']['genre'].keys()\
-            else values['genre']['genre']['selected_option']['value']
-        genre = genre.lower()
-        cluster = values['cluster']['cluster']['selected_option']['value']
-        bot.new_book(form_json['user']['id'], book_name, author_info, genre, cluster)
-        # if book_name == '228':
-        #     response = {
-        #         "response_action": "errors",
-        #         "errors": {
-        #             "genre": "Nagibator 228"
-        #         }
-        #     }
-        #     return Response(json.dumps(response), mimetype='application/json')
-        return make_response("", 200)
+    # if form_json['type'] == 'view_submission':
+    #     values = form_json['view']['state']['values']
+    #     book_name = values['book_name']['book_name']['value']
+    #     author_info = values['author_info']['author_info']['value']
+    #     genre = values['genre']['genre']['value'] if 'value' in values['genre']['genre'].keys()\
+    #         else values['genre']['genre']['selected_option']['value']
+    #     genre = genre.lower()
+    #     cluster = values['cluster']['cluster']['selected_option']['value']
+    #     bot.new_book(form_json['user']['id'], book_name, author_info, genre, cluster)
+    #     return make_response("", 200)
     action = form_json["actions"][0]
-    if action['action_id'] == 'add_genre':
-        bot.add_genre_dialog(form_json['view']['id'])
-        return make_response("", 200)
+    # if action['action_id'] == 'add_genre':
+    #     bot.add_genre_dialog(form_json['view']['id'])
+    #     return make_response("", 200)
     channel_id = form_json["channel"]["id"]
     blocks = form_json["message"]["blocks"]
     ts = form_json["message"]["ts"]
@@ -95,9 +87,9 @@ def message_actions():
     elif action["action_id"] == "hide_lib":
         bot.user_hide_books(ts, channel_id, blocks, action["value"])
     else:
-        selectors = [action["selected_option"]] if action["action_id"] == "Name" else action["selected_options"]
+        #selectors = [action["selected_option"]] if action["action_id"] == "Name" else action["selected_options"]
+        selectors = action["selected_options"]
         bot.show_books_to_user(ts, channel_id, selectors, blocks, team_id, action["action_id"])
-    # Send an HTTP 200 response with empty body so Slack knows we're done here
     return make_response("", 200)
 
 
