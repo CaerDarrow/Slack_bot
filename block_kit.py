@@ -103,7 +103,7 @@ class BlockKit:
                                 "emoji": True
                             },
                             "value": value
-                        } for text, value in response]
+                        } for text, value in response.items()]
                 }
             }
         ]
