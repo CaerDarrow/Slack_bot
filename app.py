@@ -88,7 +88,7 @@ def message_actions():
         for selector in selectors:
             base_url = 'http://42lib.site'
             books = requests.get(
-                url=f'{base_url}/api/tag_{selector}',
+                url=f'{base_url}/api/tag_{selector["value"]}',
             )
             print(books)
             print(books.json())
