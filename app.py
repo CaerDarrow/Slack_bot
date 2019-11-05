@@ -84,13 +84,14 @@ def message_actions():
         #selectors = [action["selected_option"]] if action["action_id"] == "Name" else action["selected_options"]
         selectors = action["selected_options"]
         print(form_json)
-        # for selector in selectors:
-        #     base_url = 'http://42lib.site'
-        #     books = requests.get(
-        #         url=f'{base_url}/api/tag_{selector}',
-        #     )
-        #     print(books)
-        #     print(books.json())
+        print(selectors)
+        for selector in selectors:
+            base_url = 'http://42lib.site'
+            books = requests.get(
+                url=f'{base_url}/api/tag_{selector}',
+            )
+            print(books)
+            print(books.json())
         # bot.show_books_to_user(ts, channel_id, selectors, blocks, team_id, action["action_id"])
     return make_response("", 200)
 
