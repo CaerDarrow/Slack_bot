@@ -1,6 +1,7 @@
 from flask import Flask, request, make_response, Response
 from flask_ngrok import run_with_ngrok
 from library_bot import LibraryBot
+import requests
 import json
 
 # Flask webserver for incoming traffic from Slack
@@ -82,7 +83,12 @@ def message_actions():
     else:
         #selectors = [action["selected_option"]] if action["action_id"] == "Name" else action["selected_options"]
         selectors = action["selected_options"]
-        print(form_json)
+        for selector in selectors:
+            base_url = 'http://42lib.site'
+            books = requests.get(
+                url=f'{base_url}/api/tag_{selector}',
+            ).json()
+            print(books)
         # bot.show_books_to_user(ts, channel_id, selectors, blocks, team_id, action["action_id"])
     return make_response("", 200)
 
