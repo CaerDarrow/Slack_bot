@@ -83,6 +83,7 @@ def message_actions():
     else:
         #selectors = [action["selected_option"]] if action["action_id"] == "Name" else action["selected_options"]
         selectors = action["selected_options"]
+        print(selectors)
         for selector in selectors:
             base_url = 'http://42lib.site'
             books = requests.get(
