@@ -17,7 +17,7 @@ class LibraryBot(BlockKit):
 
     # Verifying that requests came from Slack
     def verify_slack_token(self, request_token):
-        return self.SLACK_VERIFICATION_TOKEN == request_token
+        return self.SLACK_VERIFICATION_TOKEN != request_token
 
     def start_bot(self, channel_id):
         blocks = self.get_search_message()

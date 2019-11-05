@@ -82,7 +82,8 @@ def message_actions():
     else:
         #selectors = [action["selected_option"]] if action["action_id"] == "Name" else action["selected_options"]
         selectors = action["selected_options"]
-        bot.show_books_to_user(ts, channel_id, selectors, blocks, team_id, action["action_id"])
+        print(form_json)
+        # bot.show_books_to_user(ts, channel_id, selectors, blocks, team_id, action["action_id"])
     return make_response("", 200)
 
 
