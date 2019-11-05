@@ -108,91 +108,88 @@ class BlockKit:
             }
         ]
 
-    def get_book_list(self, action, selector, team_id, start):
-        #TODO: API
-        db = LibraryDB()
-        if action == "Name":
-            books = db.get_book_list_by_book_names(selector)
-        elif action == "Author_surname":
-            books = db.get_book_list_by_surnames(selector)
-        elif action == "Genre":
-            books = db.get_book_list_by_genre(selector)
-        books_count = len(books)
-        if books_count - start > 10:
-            list_b = [
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": f"{selector}"
-                    },
-                    "accessory": {
-                        "type": "button",
-                        "action_id": f"getmore-{action}",
-                        "text": {
-                            "type": "plain_text",
-                            "text": "Еще..",
-                            "emoji": True
-                        },
-                        "value": f"{selector}-{start + 10}"
-                    },
-                    "fields": [
-                        {
-                            "type": "mrkdwn",
-                            "text": f"_{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*\nCейчас в {str(book[5])}" if
-                            book[5]
-                            else f"_{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*\nCейчас у @{str(book[6])}"
-                            f"<slack://user?team={team_id}&id={str(book[7])}|:speech_balloon:>"
-                        } for book in books[start:min(start + 10, books_count)]]
-                },
-                {
-                    "type": "actions",
-                    "elements": [
-                        {
-                            "action_id": "hide_lib",
-                            "type": "button",
-                            "text": {
-                                "type": "plain_text",
-                                "text": "Скрыть",
-                                "emoji": True
-                            },
-                            "value": f"{selector}"
-                        }
-                    ]
-                }
-            ]
-        else:
-            list_b = [
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": f"{selector}"
-                    },
-                    "fields": [
-                        {
-                            "type": "mrkdwn",
-                            "text": f"_{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*\nCейчас в {str(book[5])}" if book[5]
-                            else f"_{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*\nCейчас у @{str(book[6])} <slack://user?team={team_id}&id={str(book[7])}|:speech_balloon:>"
-                        } for book in books[start:min(start + 10, books_count)]]
-                },
-                {
-                    "type": "actions",
-                    "elements": [
-                        {
-                            "action_id": "hide_lib",
-                            "type": "button",
-                            "text": {
-                                "type": "plain_text",
-                                "text": "Скрыть",
-                                "emoji": True
-                            },
-                            "value": f"{selector}"
-                        }
-                    ]
-                }
-            ]
-        return list_b
+    def get_book_list(self, action, tag, team_id, start):
+        base_url = 'http://42lib.site'
+        books = requests.get(
+            url=f'{base_url}/api/tag_{tag}',
+        ).json()
+        print(books)
+        # books_count = len(books)
+        # if books_count - start > 10:
+        #     list_b = [
+        #         {
+        #             "type": "section",
+        #             "text": {
+        #                 "type": "mrkdwn",
+        #                 "text": f"{selector}"
+        #             },
+        #             "accessory": {
+        #                 "type": "button",
+        #                 "action_id": f"getmore-{action}",
+        #                 "text": {
+        #                     "type": "plain_text",
+        #                     "text": "Еще..",
+        #                     "emoji": True
+        #                 },
+        #                 "value": f"{selector}-{start + 10}"
+        #             },
+        #             "fields": [
+        #                 {
+        #                     "type": "mrkdwn",
+        #                     "text": f"_{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*\nCейчас в {str(book[5])}" if
+        #                     book[5]
+        #                     else f"_{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*\nCейчас у @{str(book[6])}"
+        #                     f"<slack://user?team={team_id}&id={str(book[7])}|:speech_balloon:>"
+        #                 } for book in books[start:min(start + 10, books_count)]]
+        #         },
+        #         {
+        #             "type": "actions",
+        #             "elements": [
+        #                 {
+        #                     "action_id": "hide_lib",
+        #                     "type": "button",
+        #                     "text": {
+        #                         "type": "plain_text",
+        #                         "text": "Скрыть",
+        #                         "emoji": True
+        #                     },
+        #                     "value": f"{selector}"
+        #                 }
+        #             ]
+        #         }
+        #     ]
+        # else:
+        #     list_b = [
+        #         {
+        #             "type": "section",
+        #             "text": {
+        #                 "type": "mrkdwn",
+        #                 "text": f"{selector}"
+        #             },
+        #             "fields": [
+        #                 {
+        #                     "type": "mrkdwn",
+        #                     "text": f"_{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*\nCейчас в {str(book[5])}" if book[5]
+        #                     else f"_{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*\nCейчас у @{str(book[6])} <slack://user?team={team_id}&id={str(book[7])}|:speech_balloon:>"
+        #                 } for book in books[start:min(start + 10, books_count)]]
+        #         },
+        #         {
+        #             "type": "actions",
+        #             "elements": [
+        #                 {
+        #                     "action_id": "hide_lib",
+        #                     "type": "button",
+        #                     "text": {
+        #                         "type": "plain_text",
+        #                         "text": "Скрыть",
+        #                         "emoji": True
+        #                     },
+        #                     "value": f"{selector}"
+        #                 }
+        #             ]
+        #         }
+        #     ]
+        # return list_b
 
     def get_more_books(self, action_id, action_value, blocks, team_id):
         true_action = action_id.split('-')[1]
