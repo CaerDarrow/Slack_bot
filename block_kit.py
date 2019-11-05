@@ -1,71 +1,10 @@
 from database import LibraryDB
 from pyzbar import pyzbar
+import requests
 from PIL import Image
 
 
 class BlockKit:
-    WELCOME_BLOCK = {
-        "type": "section",
-        "text": {
-            "type": "mrkdwn",
-            "text": (
-                "Привет, хочешь почитать? :wave:\n\n"
-            ),
-        },
-    }
-    DIVIDER_BLOCK = {"type": "divider"}
-
-    SELECT_BY_GENRE = {
-        "type": "section",
-        "text": {
-            "type": "mrkdwn",
-            "text": "Поиск по жанрам"
-        },
-        "accessory": {
-            "type": "multi_external_select",
-            "action_id": "Genre",
-            "placeholder": {
-                "type": "plain_text",
-                "text": "Искать",
-                "emoji": True
-            },
-            "max_selected_items": 5
-        }
-    }
-    # SELECT_BY_BOOK_NAME = {
-    #     "type": "section",
-    #     "text": {
-    #         "type": "mrkdwn",
-    #         "text": "Поиск по названию"
-    #     },
-    #     "accessory": {
-    #         "type": "external_select",
-    #         "action_id": "Name",
-    #         "placeholder": {
-    #             "type": "plain_text",
-    #             "text": "Искать",
-    #             "emoji": True
-    #         },
-    #     }
-    # }
-    # SELECT_BY_AUTHOR_SURNAME = {
-    #     "type": "section",
-    #     "text": {
-    #         "type": "mrkdwn",
-    #         "text": "Поиск по фамилии"
-    #     },
-    #     "accessory": {
-    #         "type": "multi_external_select",
-    #         "action_id": "Author_surname",
-    #         "placeholder": {
-    #             "type": "plain_text",
-    #             "text": "Искать",
-    #             "emoji": True
-    #         },
-    #         "max_selected_items": 5
-    #     }
-    # }
-
     def __init__(self):
         self.username = "library_bot"
         self.icon_emoji = ":robot_face:"
@@ -76,6 +15,7 @@ class BlockKit:
         image = Image.open(response)
         for qr in pyzbar.decode(image):
             code = qr.data.decode('utf-8')
+            # TODO: API
             book = self.db.get_book_by_id(code)
             if book[5]:
                 blocks += [
@@ -123,13 +63,24 @@ class BlockKit:
             ]
         return blocks
 
-    def get_welcome_message(self):
-        selections = self.db.get_book_names()
-        selections += self.db.get_surnames()
-        selections += self.db.get_genres()
+    def get_search_message(self):
+        base_url = 'http://42lib.site'
+        response = requests.get(
+            url=f'{base_url}/api/get_russian_tags',
+        ).json()
         return [
-            self.WELCOME_BLOCK,
-            self.DIVIDER_BLOCK,
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": (
+                        "Привет, хочешь почитать? :wave:\n\n"
+                    ),
+                },
+            },
+            {
+                "type": "divider"
+            },
             {
                 "type": "section",
                 "text": {
@@ -148,37 +99,17 @@ class BlockKit:
                         {
                             "text": {
                                 "type": "plain_text",
-                                "text": selection[0],
+                                "text": text,
                                 "emoji": True
                             },
-                            "value": selection[0]
-                        } for selection in selections]
+                            "value": value
+                        } for text, value in response]
                 }
             }
         ]
 
-    def get_menu_options(self, action, pattern):
-        if action == "Name":
-            selections = self.db.get_book_names()
-        elif action == "Author_surname":
-            selections = self.db.get_surnames()
-        elif action == "Genre" or action == "Genre_view":
-            selections = self.db.get_genres()
-        menu_options = {
-            "options": [
-                {
-                    "text": {
-                        "type": "plain_text",
-                        "text": selection[0],
-                        "emoji": True
-                    },
-                    "value": selection[0]
-                } for selection in selections if pattern in selection[0].lower()
-            ]
-        }
-        return menu_options
-
     def get_book_list(self, action, selector, team_id, start):
+        #TODO: API
         db = LibraryDB()
         if action == "Name":
             books = db.get_book_list_by_book_names(selector)

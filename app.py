@@ -8,14 +8,6 @@ app = Flask(__name__)
 run_with_ngrok(app)
 bot = LibraryBot()
 
-# @app.route("/slack/message_options", methods=["POST"])
-# def message_options():
-#     form_json = json.loads(request.form["payload"])
-#     bot.verify_slack_token(form_json["token"])
-#     pattern = form_json["value"].lower()
-#     menu_options = bot.get_menu_options(form_json["action_id"], pattern)
-#     return Response(json.dumps(menu_options), mimetype='application/json')
-
 @app.route("/slack/reg_events", methods=["POST"])
 def reg_events():
     form_json = request.json
@@ -47,7 +39,8 @@ def commands():
 @app.route("/slack/message_actions", methods=["POST"])
 def message_actions():
     form_json = json.loads(request.form["payload"])
-    bot.verify_slack_token(form_json["token"])
+    if bot.verify_slack_token(form_json["token"]):
+        return make_response("Request contains invalid Slack verification token", 403)
     team_id = form_json["team"]["id"]
     # if form_json['type'] == 'view_submission':
     #     values = form_json['view']['state']['values']

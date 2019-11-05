@@ -17,13 +17,10 @@ class LibraryBot(BlockKit):
 
     # Verifying that requests came from Slack
     def verify_slack_token(self, request_token):
-        if self.SLACK_VERIFICATION_TOKEN != request_token:
-            print("Error: invalid verification token!")
-            print("Received {} but was expecting {}".format(request_token, self.SLACK_VERIFICATION_TOKEN))
-            return make_response("Request contains invalid Slack verification token", 403)
+        return self.SLACK_VERIFICATION_TOKEN == request_token
 
     def start_bot(self, channel_id):
-        blocks = self.get_welcome_message()
+        blocks = self.get_search_message()
         response = self.slack_client.chat_postMessage(
             icon_emoji=":robot_face:",
             channel=channel_id,
