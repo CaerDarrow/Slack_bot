@@ -87,8 +87,9 @@ def message_actions():
             base_url = 'http://42lib.site'
             books = requests.get(
                 url=f'{base_url}/api/tag_{selector}',
-            ).json()
+            )
             print(books)
+            print(books.json())
         # bot.show_books_to_user(ts, channel_id, selectors, blocks, team_id, action["action_id"])
     return make_response("", 200)
 
