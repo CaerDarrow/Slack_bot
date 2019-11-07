@@ -122,8 +122,7 @@ class BlockKit:
             url=f"{base_url}/api/tag_{tag}",
         ).json().values())
         books_count = len(books)
-        list_b = [
-            {
+        book_list = {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
@@ -136,8 +135,8 @@ class BlockKit:
                         if book['status'] == 'online' else f" у @{book['place']}")
                         # f"<slack://user?team={team_id}&id={str(book[7])}|:speech_balloon:>")
                     } for book in books[start:min(start + 10, books_count)]]
-            },
-            {
+            }
+        buttons = {
                 "type": "actions",
                 "elements": [
                     {
@@ -152,7 +151,6 @@ class BlockKit:
                     }
                 ]
             }
-        ]
         if books_count - start > 10:
             more_button = {
                     "action_id": f"getmore-{tag}",
@@ -164,8 +162,8 @@ class BlockKit:
                     },
                     "value": f"{start + 10}"
                 }
-            list_b[1]['elements'].insert(0, more_button)
-        return list_b
+            buttons[1]['elements'].insert(0, more_button)
+        return book_list, buttons
 
     def get_more_books(self, action_id, action_value, blocks, team_id):
         tag = action_id.split('-')[1]
