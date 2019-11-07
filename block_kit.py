@@ -65,17 +65,21 @@ class BlockKit:
         return blocks
 
     def get_menu_options(self, pattern):
-        base_url = 'http://42lib.site'
-        response = requests.get(
-            url=f'{base_url}/api/get_russian_tags',
-        ).json()
-        options = {
-            "options": [
-                {
+        if pattern == '':
+            base_url = 'http://42lib.site'
+            response = requests.get(
+                url=f'{base_url}/api/get_russian_tags',
+            ).json()
+            self.options = response
+        return {"options": [
+            {
+                "text": {
+                    "type": "plain_text",
                     "text": text,
-                    "value": value
-                } for text, value in response.items() if pattern in text.lower()]}
-        return options
+                    "emoji": True
+                },
+                "value": value
+            } for text, value in self.options.items() if pattern in text]}
 
     def get_search_message(self):
         return [
