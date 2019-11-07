@@ -354,8 +354,10 @@ class BlockKit:
                 continue
             elif "elements" in section.keys():
                 try:
-                    section["elements"][0]["action_id"].split('-')[1] == action_value
-                    continue
+                    if section["elements"][0]["action_id"].split('-')[1] == action_value:
+                        continue
+                    if section["elements"][0]['value'] == action_value:
+                        continue
                 except IndexError:
                     new_blocks.append(section)
             else:
