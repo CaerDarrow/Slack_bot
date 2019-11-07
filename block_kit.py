@@ -358,6 +358,8 @@ class BlockKit:
                         continue
                     if section["elements"][0]['value'] == action_value:
                         continue
+                    if section["elements"][1]['value'] == action_value:
+                        continue
                 except IndexError:
                     new_blocks.append(section)
             else:
