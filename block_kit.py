@@ -65,7 +65,7 @@ class BlockKit:
         return blocks
 
     def get_menu_options(self, pattern):
-        if pattern == '':
+        if self.options == {}:
             base_url = 'http://42lib.site'
             response = requests.get(
                 url=f'{base_url}/api/get_russian_tags',
@@ -77,7 +77,7 @@ class BlockKit:
                 {
                     "text": text,
                     "value": value
-                } for text, value in self.options.items() if pattern in text]}
+                } for text, value in self.options.items() if pattern in text.lower()]}
         return options
 
     def get_search_message(self):
