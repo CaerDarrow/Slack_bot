@@ -356,7 +356,8 @@ class BlockKit:
         blocks = [section for section in blocks if "text" in section.keys()
                   and section["text"]["text"][1:] != action_value or
                   "elements" in section.keys() and
-                  section["elements"][0]["value"] != action_value]
+                  section["elements"][0]["value"] != action_value or
+                  section["elements"][1]["value"] != action_value]
         return blocks
 
     def show_books(self, selectors, action_id, team_id):
