@@ -110,9 +110,9 @@ class BlockKit:
                         "type": "plain_text",
                         "text": "Поиск...",
                         "emoji": True
-                    }
-                },
-                "min_query_length": 2
+                    },
+                    "min_query_length": 2
+                }
             }
         ]
 
