@@ -348,11 +348,19 @@ class BlockKit:
         ]
 
     def hide_books(self, action_value, blocks):
-        blocks = [section for section in blocks if "text" in section.keys()
-                  and section["text"]["text"][1:] != action_value or
-                  "elements" in section.keys() and
-                  section["elements"][0]["action_id"].split('-')[1] != action_value]
-        return blocks
+        new_blocks = []
+        for section in blocks:
+            if "text" in section.keys() and section["text"]["text"][1:] == action_value:
+                continue
+            elif "elements" in section.keys():
+                try:
+                    section["elements"][0]["action_id"].split('-')[1] == action_value
+                    continue
+                except IndexError:
+                    new_blocks.append(section)
+            else:
+                new_blocks.append(section)
+        return new_blocks
 
     def show_books(self, selectors, team_id):
         blocks = []
