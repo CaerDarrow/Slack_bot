@@ -69,7 +69,7 @@ class BlockKit:
         response = requests.get(
             url=f'{base_url}/api/get_russian_tags',
         ).json()
-        return {
+        menu_options = {
             "options": [
                 {
                     "text": {
@@ -79,7 +79,9 @@ class BlockKit:
                     },
                     "value": value
                 } for text, value in response.items() if pattern in text
-            ]}
+            ]
+        }
+        return menu_options
 
     def get_search_message(self):
         return [
