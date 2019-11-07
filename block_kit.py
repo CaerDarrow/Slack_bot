@@ -180,11 +180,12 @@ class BlockKit:
     def get_more_books(self, action_id, action_value, blocks, team_id):
         true_action = action_id.split('-')[1]
         selector, start = action_value.split('-')
-        blocks = [self.get_book_list(true_action, selector, team_id, int(start))
+        blocks = [self.get_book_list(true_action, selector, team_id, int(start))[0]
                   if "text" in section.keys() and section["text"]["text"][1:] == selector
-                     or "elements" in section.keys() and
-                     section["elements"][0]["value"].split('-')[0] == action_value
-                  else section for section in blocks]
+                  else section for section in blocks if
+                  "elements" in section.keys() and
+                  section["elements"][0]["value"].split('-')[0] != action_value
+                  or "elements" not in section.keys()]
         return blocks
 
     def get_return_book_block(self, book_id):
