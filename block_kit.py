@@ -132,7 +132,7 @@ class BlockKit:
                 "fields": [
                     {
                         "type": "mrkdwn",
-                        "text": f"_{book['author']}_ *'{book['name']}'*\nCейчас" + (f"в {book['place']}"
+                        "text": f"_{book['author']}_ *'{book['book_name']}'*\nCейчас" + (f"в {book['place']}"
                         if book['status'] == 'online' else f"у @{book['place']}")
                         # f"<slack://user?team={team_id}&id={str(book[7])}|:speech_balloon:>")
                     } for book in books[start:min(start + 10, books_count)]]
