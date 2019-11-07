@@ -71,6 +71,7 @@ class BlockKit:
                 url=f'{base_url}/api/get_russian_tags',
             ).json()
             self.options = response
+        print(self.options)
         options = {
             "options": [
                 {
