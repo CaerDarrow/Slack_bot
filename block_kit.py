@@ -141,6 +141,28 @@ class BlockKit:
                 "type": "actions",
                 "elements": [
                     {
+                        "action_id": f"getmore-{action}",
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Еще..",
+                            "emoji": True
+                        },
+                        "value": f"{tag}-{start + 10}"
+                    },
+                    {
+                        "action_id": "hide_lib",
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Скрыть",
+                            "emoji": True
+                        },
+                        "value": f"{tag}"
+                    }
+                ] if books_count - start > 10 else
+                [
+                    {
                         "action_id": "hide_lib",
                         "type": "button",
                         "text": {
@@ -153,25 +175,16 @@ class BlockKit:
                 ]
             }
         ]
-        if books_count - start > 10:
-            list_b[0].update({"accessory": {
-                        "type": "button",
-                        "action_id": f"getmore-{action}",
-                        "text": {
-                            "type": "plain_text",
-                            "text": "Еще..",
-                            "emoji": True
-                        },
-                        "value": f"{tag}-{start + 10}"
-                    }})
         return list_b
 
     def get_more_books(self, action_id, action_value, blocks, team_id):
         true_action = action_id.split('-')[1]
         selector, start = action_value.split('-')
-        blocks = [self.get_book_list(true_action, selector, team_id, int(start))[0]
-                  if "text" in section.keys() and section["text"]["text"][1:] == selector else section
-                  for section in blocks]
+        blocks = [self.get_book_list(true_action, selector, team_id, int(start))
+                  if "text" in section.keys() and section["text"]["text"][1:] == selector
+                     or "elements" in section.keys() and
+                     section["elements"][0]["value"].split('-')[0] == action_value
+                  else section for section in blocks]
         return blocks
 
     def get_return_book_block(self, book_id):
@@ -345,7 +358,7 @@ class BlockKit:
         blocks = [section for section in blocks if "text" in section.keys()
                   and section["text"]["text"][1:] != action_value or
                   "elements" in section.keys() and
-                  section["elements"][0]["value"] != action_value]
+                  section["elements"][0]["value"].split('-')[0] != action_value]
         return blocks
 
     def show_books(self, selectors, action_id, team_id):
