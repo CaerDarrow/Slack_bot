@@ -141,28 +141,6 @@ class BlockKit:
                 "type": "actions",
                 "elements": [
                     {
-                        "action_id": f"getmore-{action}",
-                        "type": "button",
-                        "text": {
-                            "type": "plain_text",
-                            "text": "Еще..",
-                            "emoji": True
-                        },
-                        "value": f"{tag}-{start + 10}"
-                    },
-                    {
-                        "action_id": "hide_lib",
-                        "type": "button",
-                        "text": {
-                            "type": "plain_text",
-                            "text": "Скрыть",
-                            "emoji": True
-                        },
-                        "value": f"{tag}"
-                    }
-                ] if books_count - start > 10 else
-                [
-                    {
                         "action_id": "hide_lib",
                         "type": "button",
                         "text": {
@@ -175,6 +153,17 @@ class BlockKit:
                 ]
             }
         ]
+        if books_count - start > 10:
+            list_b[0].update({"accessory": {
+                        "type": "button",
+                        "action_id": f"getmore-{action}",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Еще..",
+                            "emoji": True
+                        },
+                        "value": f"{tag}-{start + 10}"
+                    }})
         return list_b
 
     def get_more_books(self, action_id, action_value, blocks, team_id):
@@ -356,8 +345,7 @@ class BlockKit:
         blocks = [section for section in blocks if "text" in section.keys()
                   and section["text"]["text"][1:] != action_value or
                   "elements" in section.keys() and
-                  section["elements"][0]["value"] != action_value or
-                  section["elements"][1]["value"] != action_value]
+                  section["elements"][0]["value"] != action_value]
         return blocks
 
     def show_books(self, selectors, action_id, team_id):
