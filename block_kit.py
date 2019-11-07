@@ -111,7 +111,8 @@ class BlockKit:
                         "text": "Поиск...",
                         "emoji": True
                     }
-                }
+                },
+                "min_query_length": 2
             }
         ]
 
