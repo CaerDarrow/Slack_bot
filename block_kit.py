@@ -119,7 +119,7 @@ class BlockKit:
     def get_book_list(self, action, tag, team_id, start):
         base_url = 'http://42lib.site'
         books = list(requests.get(
-            url=f"{base_url}/api/tag_{tag['value']}",
+            url=f"{base_url}/api/tag_{tag}",
         ).json().values())
         books_count = len(books)
         list_b = [
@@ -127,13 +127,13 @@ class BlockKit:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"{tag['text']}"
+                    "text": f"#{tag}"
                 },
                 "fields": [
                     {
                         "type": "mrkdwn",
-                        "text": f"_{book['author']}_ *'{book['book_name']}'*\nCейчас" + (f"в {book['place']}"
-                        if book['status'] == 'online' else f"у @{book['place']}")
+                        "text": f"_{book['author']}_ *\n'{book['book_name']}'*\nCейчас" + (f" в {book['place']}"
+                        if book['status'] == 'online' else f" у @{book['place']}")
                         # f"<slack://user?team={team_id}&id={str(book[7])}|:speech_balloon:>")
                     } for book in books[start:min(start + 10, books_count)]]
             },
@@ -148,7 +148,7 @@ class BlockKit:
                             "text": "Скрыть",
                             "emoji": True
                         },
-                        "value": f"{tag['value']}"
+                        "value": f"{tag}"
                     }
                 ]
             }
@@ -162,7 +162,7 @@ class BlockKit:
                             "text": "Еще..",
                             "emoji": True
                         },
-                        "value": f"{tag['value']}-{start + 10}"
+                        "value": f"{tag}-{start + 10}"
                     }})
         return list_b
 
@@ -343,7 +343,7 @@ class BlockKit:
 
     def hide_books(self, action_value, blocks):
         blocks = [section for section in blocks if "text" in section.keys()
-                  and section["text"]["text"] != action_value or
+                  and section["text"]["text"][1:] != action_value or
                   "elements" in section.keys() and
                   section["elements"][0]["value"] != action_value]
         return blocks
@@ -351,7 +351,7 @@ class BlockKit:
     def show_books(self, selectors, action_id, team_id):
         blocks = []
         for i in range(len(selectors)):
-            blocks += self.get_book_list(action_id, selectors[i], team_id, 0)
+            blocks += self.get_book_list(action_id, selectors[i]['value'], team_id, 0)
         return blocks
 
     def add_book(self):
