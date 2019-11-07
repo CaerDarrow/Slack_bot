@@ -141,6 +141,28 @@ class BlockKit:
                 "type": "actions",
                 "elements": [
                     {
+                        "action_id": f"getmore-{action}",
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Еще..",
+                            "emoji": True
+                        },
+                        "value": f"{tag}-{start + 10}"
+                    },
+                    {
+                        "action_id": "hide_lib",
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Скрыть",
+                            "emoji": True
+                        },
+                        "value": f"{tag}"
+                    }
+                ] if books_count - start > 10 else
+                [
+                    {
                         "action_id": "hide_lib",
                         "type": "button",
                         "text": {
@@ -153,17 +175,6 @@ class BlockKit:
                 ]
             }
         ]
-        if books_count - start > 10:
-            list_b[1]['elements'].append({
-                        "action_id": f"getmore-{action}",
-                        "type": "button",
-                        "text": {
-                            "type": "plain_text",
-                            "text": "Еще..",
-                            "emoji": True
-                        },
-                        "value": f"{tag}-{start + 10}"
-                    })
         return list_b
 
     def get_more_books(self, action_id, action_value, blocks, team_id):
