@@ -162,7 +162,7 @@ class BlockKit:
                         "text": "Еще..",
                         "emoji": True
                     },
-                    "value": start + 10
+                    "value": f"{start + 10}"
                 }
             list_b[1]['elements'].insert(0, more_button)
         return list_b
@@ -173,7 +173,7 @@ class BlockKit:
                   "elements" in section.keys() and
                   section["elements"][0]["action_id"] != action_id
                   or "elements" not in section.keys()]
-        blocks = [self.get_book_list(tag, team_id, action_value)
+        blocks = [self.get_book_list(tag, team_id, int(action_value))
                   if "text" in section.keys() and section["text"]["text"][1:] == tag
                   else section for section in blocks]
         return blocks
