@@ -169,7 +169,7 @@ class BlockKit:
 
     def get_more_books(self, action_id, action_value, blocks, team_id):
         tag = action_id.split('-')[1]
-        book_list, buttons = self.get_book_list(tag, team_id, int(action_value))
+        book_list = self.get_book_list(tag, team_id, int(action_value))
         new_blocks = []
         for section in blocks:
             if "elements" not in section.keys() or "elements" in section.keys()\
