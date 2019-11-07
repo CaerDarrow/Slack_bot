@@ -155,14 +155,14 @@ class BlockKit:
         ]
         if books_count - start > 10:
             more_button = {
-                    "action_id": "hide_lib",
+                    "action_id": f"getmore-{action}",
                     "type": "button",
                     "text": {
                         "type": "plain_text",
-                        "text": "Скрыть",
+                        "text": "Еще..",
                         "emoji": True
                     },
-                    "value": f"{tag}"
+                    "value": f"{tag}-{start + 10}"
                 }
             list_b[1]['elements'].insert(0, more_button)
         return list_b
