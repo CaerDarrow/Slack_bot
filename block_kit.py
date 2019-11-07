@@ -353,15 +353,14 @@ class BlockKit:
             if "text" in section.keys() and section["text"]["text"][1:] == action_value:
                 continue
             elif "elements" in section.keys():
-                try:
-                    if section["elements"][0]["action_id"].split('-')[1] == action_value:
-                        continue
-                    elif section["elements"][0]['value'] == action_value:
-                        continue
-                    elif section["elements"][1]['value'] == action_value:
-                        continue
-                except IndexError:
-                    new_blocks.append(section)
+                if section["elements"][0]['value'] == action_value:
+                    continue
+                else:
+                    try:
+                        if section["elements"][0]["action_id"].split('-')[1] == action_value:
+                            continue
+                    except IndexError:
+                        new_blocks.append(section)
             else:
                 new_blocks.append(section)
         return new_blocks
