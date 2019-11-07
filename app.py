@@ -9,6 +9,14 @@ app = Flask(__name__)
 run_with_ngrok(app)
 bot = LibraryBot()
 
+@app.route("/slack/message_options", methods=["POST"])
+def message_options():
+    form_json = json.loads(request.form["payload"])
+    bot.verify_slack_token(form_json["token"])
+    pattern = form_json["value"].lower()
+    menu_options = bot.get_menu_options(pattern)
+    return Response(json.dumps(menu_options), mimetype='application/json')
+
 @app.route("/slack/reg_events", methods=["POST"])
 def reg_events():
     form_json = request.json

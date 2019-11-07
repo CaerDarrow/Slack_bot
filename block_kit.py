@@ -9,6 +9,7 @@ class BlockKit:
         self.username = "library_bot"
         self.icon_emoji = ":robot_face:"
         self.db = LibraryDB()
+        self.options = {}
 
     def recognize_book(self, response, user_id, team_id):
         blocks = []
@@ -63,11 +64,24 @@ class BlockKit:
             ]
         return blocks
 
+    def get_menu_options(self, pattern):
+        if pattern == '':
+            base_url = 'http://42lib.site'
+            response = requests.get(
+                url=f'{base_url}/api/get_russian_tags',
+            ).json()
+            self.options = response.items()
+        return {"options": [
+            {
+                "text": {
+                    "type": "plain_text",
+                    "text": text,
+                    "emoji": True
+                },
+                "value": value
+            } for text, value in self.options if text.startswith(pattern)]}
+
     def get_search_message(self):
-        base_url = 'http://42lib.site'
-        response = requests.get(
-            url=f'{base_url}/api/get_russian_tags',
-        ).json()
         return [
             {
                 "type": "section",
@@ -88,22 +102,13 @@ class BlockKit:
                     "text": "Поиск по тегу, названию, автору"
                 },
                 "accessory": {
-                    "type": "multi_static_select",
+                    "type": "multi_external_select",
                     "action_id": "Name",
                     "placeholder": {
                         "type": "plain_text",
                         "text": "Поиск...",
                         "emoji": True
-                    },
-                    "options": [
-                        {
-                            "text": {
-                                "type": "plain_text",
-                                "text": text,
-                                "emoji": True
-                            },
-                            "value": value
-                        } for text, value in response.items()]
+                    }
                 }
             }
         ]
