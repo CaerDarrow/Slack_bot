@@ -65,19 +65,16 @@ class BlockKit:
         return blocks
 
     def get_menu_options(self, pattern):
-        if self.options == {}:
-            base_url = 'http://42lib.site'
-            response = requests.get(
-                url=f'{base_url}/api/get_russian_tags',
-            ).json()
-            self.options = response
-        print(self.options)
+        base_url = 'http://42lib.site'
+        response = requests.get(
+            url=f'{base_url}/api/get_russian_tags',
+        ).json()
         options = {
             "options": [
                 {
                     "text": text,
                     "value": value
-                } for text, value in self.options.items()]}
+                } for text, value in response.items()]}
         return options
 
     def get_search_message(self):
