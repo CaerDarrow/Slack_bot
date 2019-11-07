@@ -105,7 +105,7 @@ class BlockKit:
                 },
                 "accessory": {
                     "type": "multi_external_select",
-                    "action_id": "Name",
+                    "action_id": "tags",
                     "placeholder": {
                         "type": "plain_text",
                         "text": "Поиск...",
@@ -116,7 +116,7 @@ class BlockKit:
             }
         ]
 
-    def get_book_list(self, action, tag, team_id, start):
+    def get_book_list(self, tag, team_id, start):
         base_url = 'http://42lib.site'
         books = list(requests.get(
             url=f"{base_url}/api/tag_{tag}",
@@ -155,27 +155,26 @@ class BlockKit:
         ]
         if books_count - start > 10:
             more_button = {
-                    "action_id": f"getmore-{action}",
+                    "action_id": f"getmore-{tag}",
                     "type": "button",
                     "text": {
                         "type": "plain_text",
                         "text": "Еще..",
                         "emoji": True
                     },
-                    "value": f"{tag}-{start + 10}"
+                    "value": start + 10
                 }
             list_b[1]['elements'].insert(0, more_button)
         return list_b
 
     def get_more_books(self, action_id, action_value, blocks, team_id):
-        true_action = action_id.split('-')[1]
-        selector, start = action_value.split('-')
+        tag = action_id.split('-')[1]
         blocks = [section for section in blocks if
                   "elements" in section.keys() and
                   section["elements"][0]["action_id"] != action_id
                   or "elements" not in section.keys()]
-        blocks = [self.get_book_list(true_action, selector, team_id, int(start))
-                  if "text" in section.keys() and section["text"]["text"][1:] == selector
+        blocks = [self.get_book_list(tag, team_id, action_value)
+                  if "text" in section.keys() and section["text"]["text"][1:] == tag
                   else section for section in blocks]
         return blocks
 
@@ -353,10 +352,10 @@ class BlockKit:
                   section["elements"][0]["value"].split('-')[0] != action_value]
         return blocks
 
-    def show_books(self, selectors, action_id, team_id):
+    def show_books(self, selectors, team_id):
         blocks = []
         for i in range(len(selectors)):
-            blocks += self.get_book_list(action_id, selectors[i]['value'], team_id, 0)
+            blocks += self.get_book_list(selectors[i]['value'], team_id, 0)
         return blocks
 
     def add_book(self):

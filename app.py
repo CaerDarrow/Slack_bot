@@ -89,9 +89,9 @@ def message_actions():
                                  blocks[1]['elements'][0]['options'][0]['value'].split('_')[0])
     elif action["action_id"] == "hide_lib":
         bot.user_hide_books(ts, channel_id, blocks, action["value"])
-    else:
+    elif action["action_id"] == 'tags':
         selectors = action["selected_options"]
-        bot.show_books_to_user(ts, channel_id, selectors, blocks, team_id, action["action_id"])
+        bot.show_books_to_user(ts, channel_id, selectors, blocks, team_id)
     return make_response("", 200)
 
 

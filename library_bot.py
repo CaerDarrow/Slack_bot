@@ -110,8 +110,8 @@ class LibraryBot(BlockKit):
             as_user=True
         )
 
-    def show_books_to_user(self, ts, channel_id, selectors, blocks, team_id, action_id):
-        blocks = blocks + self.show_books(selectors, action_id, team_id)
+    def show_books_to_user(self, ts, channel_id, selectors, blocks, team_id):
+        blocks = blocks + self.show_books(selectors, team_id)
         response = self.slack_client.chat_update(
             channel=channel_id,
             ts=ts,
