@@ -15,6 +15,7 @@ def message_options():
     bot.verify_slack_token(form_json["token"])
     pattern = form_json["value"].lower()
     menu_options = bot.get_menu_options(pattern)
+    print(menu_options)
     return Response(json.dumps(menu_options), mimetype='application/json')
 
 @app.route("/slack/reg_events", methods=["POST"])
