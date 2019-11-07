@@ -118,9 +118,9 @@ class BlockKit:
 
     def get_book_list(self, action, tag, team_id, start):
         base_url = 'http://42lib.site'
-        books = requests.get(
+        books = list(requests.get(
             url=f"{base_url}/api/tag_{tag['value']}",
-        ).json().items()
+        ).json().values())
         books_count = len(books)
         list_b = [
             {
