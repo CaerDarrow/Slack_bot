@@ -120,7 +120,7 @@ class BlockKit:
         base_url = 'http://42lib.site'
         books = requests.get(
             url=f"{base_url}/api/tag_{tag['value']}",
-        ).json()
+        ).json().items()
         books_count = len(books)
         list_b = [
             {
