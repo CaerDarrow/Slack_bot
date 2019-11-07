@@ -70,7 +70,7 @@ class BlockKit:
             response = requests.get(
                 url=f'{base_url}/api/get_russian_tags',
             ).json()
-            self.options = response.items()
+            self.options = response
         return {"options": [
             {
                 "text": {
@@ -79,7 +79,7 @@ class BlockKit:
                     "emoji": True
                 },
                 "value": value
-            } for text, value in self.options if text.startswith(pattern)]}
+            } for text, value in self.options.items() if pattern in text]}
 
     def get_search_message(self):
         return [
