@@ -172,7 +172,7 @@ class BlockKit:
         selector, start = action_value.split('-')
         blocks = [section for section in blocks if
                   "elements" in section.keys() and
-                  section["elements"][0]["action_id"] != action_value
+                  section["elements"][0]["action_id"] != action_id
                   or "elements" not in section.keys()]
         blocks = [self.get_book_list(true_action, selector, team_id, int(start))
                   if "text" in section.keys() and section["text"]["text"][1:] == selector
