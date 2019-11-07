@@ -175,7 +175,7 @@ class BlockKit:
             if "elements" not in section.keys() or "elements" in section.keys()\
                     and section["elements"][0]["action_id"] != action_id:
                 if "text" in section.keys() and section["text"]["text"][1:] == tag:
-                    new_blocks.append(book_list)
+                    new_blocks += book_list
                 else:
                     new_blocks.append(section)
         return new_blocks
