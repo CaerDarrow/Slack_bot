@@ -74,7 +74,7 @@ class BlockKit:
                 {
                     "text": text,
                     "value": value
-                } for text, value in response.items()]}
+                } for text, value in response.items() if pattern in text.lower()]}
         return options
 
     def get_search_message(self):
