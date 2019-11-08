@@ -43,6 +43,8 @@ def commands():
         bot.add_book_dialog(form_json['trigger_id'])
     elif form_json['command'] == '/booklist':
         bot.start_bot(form_json['channel_id'])
+    elif form_json['command'] == '/test':
+        bot.send_auth_verify_message('ApxuBapuyc@bk.ru')
     return make_response("", 200)
 
 # The endpoint Slack will send the user's menu selection to
@@ -89,6 +91,8 @@ def message_actions():
                                  blocks[1]['elements'][0]['options'][0]['value'].split('_')[0])
     elif action["action_id"] == "hide_lib":
         bot.user_hide_books(ts, channel_id, blocks, action["value"])
+    elif action["action_id"] == 'verify':
+        bot.send_slack_id_to_site(action['value'], form_json['user']['id'])
     elif action["action_id"] == 'tags':
         selectors = action["selected_options"]
         bot.show_books_to_user(ts, channel_id, selectors, blocks, team_id)

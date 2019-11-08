@@ -264,6 +264,27 @@ class BlockKit:
             }
         ]
 
+    def verify_block(self, email):
+        return [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": "Привет, нажми кнопку, чтобы привязать свой акаунт."
+                },
+                "accessory": {
+                    "action_id": "verify",
+                    "type": "button",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "Тык",
+                        "emoji": True
+                    },
+                    "value": f"{email.split('@')[0]}"
+                }
+            }
+        ]
+
     def deny_book(self, user_name, val):
         # TODO: block
         return [

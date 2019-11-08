@@ -27,6 +27,31 @@ class LibraryBot(BlockKit):
             blocks=blocks,
         )
 
+    def send_auth_verify_message(self, email):
+        response = self.slack_client.users_lookupByEmail(
+            email=email
+        )
+        if response['ok']:
+            user_id = response['user']['id']
+            response = self.slack_client.conversations_open(users=[user_id])
+            channel = response['channel']['id']
+            blocks = self.verify_block(email)
+            response = self.slack_client.chat_postMessage(
+                icon_emoji=":robot_face:",
+                channel=channel,
+                blocks=blocks
+            )
+
+    def send_slack_id_to_site(self, user_name, user_id):
+        base_url = 'http://42lib.site'
+        requests.post(
+            url=f'{base_url}/api/?',
+            json={
+                "user_name": user_name,
+                "use_id": user_id
+            }
+        )
+
     def send_books(self, channel_id, url, user_name, team_id):
         response = requests.get(
             url,
