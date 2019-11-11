@@ -70,14 +70,14 @@ class BlockKit:
             url=f'{base_url}/api/get_russian_tags',
         ).json()
         menu_options = {}
-        if len(pattern) > 2:
+        if len(pattern) > 1:
             #TODO: normal length
             menu_options = {
                 "options": [
                     {
                         "text": {
                             "type": "plain_text",
-                            "text": text if len(text) < 75 else f'{text[:75]}...',
+                            "text": text,
                             "emoji": True
                         },
                         "value": value
@@ -114,7 +114,7 @@ class BlockKit:
                         "text": "Поиск...",
                         "emoji": True
                     },
-                    "min_query_length": 3
+                    "min_query_length": 2
                 }
             }
         ]
