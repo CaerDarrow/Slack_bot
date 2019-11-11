@@ -2,7 +2,6 @@ from database import LibraryDB
 from pyzbar import pyzbar
 import requests
 from PIL import Image
-import re
 
 class BlockKit:
     def __init__(self):
@@ -69,22 +68,19 @@ class BlockKit:
         response = requests.get(
             url=f'{base_url}/api/get_russian_tags',
         ).json()
-        menu_options = {}
-        comp = re.compile(rf"{pattern}", re.UNICODE)
-        if len(pattern) > 1:
-            #TODO: normal length
-            menu_options = {
-                "options": [
-                    {
-                        "text": {
-                            "type": "plain_text",
-                            "text": text,
-                            "emoji": True
-                        },
-                        "value": value
-                    } for text, value in response.items() if bool(comp.search(text.lower()))
-                ]
-            }
+        #TODO: normal length
+        menu_options = {
+            "options": [
+                {
+                    "text": {
+                        "type": "plain_text",
+                        "text": text,
+                        "emoji": True
+                    },
+                    "value": value
+                } for text, value in response.items() if pattern in text.lower()
+            ]
+        }
         return menu_options
 
     def get_search_message(self):
