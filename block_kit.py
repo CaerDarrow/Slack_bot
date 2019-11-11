@@ -74,11 +74,11 @@ class BlockKit:
                 {
                     "text": {
                         "type": "plain_text",
-                        "text": text,
+                        "text": text if len(text) < 75 else f'{text}...',
                         "emoji": True
                     },
                     "value": value
-                } for text, value in response.items() if pattern in text.lower()
+                } for text, value in response.items() if pattern in text.lower()[:75]
             ]
         }
         return menu_options
