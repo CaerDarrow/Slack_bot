@@ -132,8 +132,8 @@ class BlockKit:
                 "fields": [
                     {
                         "type": "mrkdwn",
-                        "text": f"_{book['author']}_ \n*'{book['book_name']}'*\nCейчас" + (f" в {book['place']}"
-                        if book['status'] == 'online' else f" у @{book['place']}")
+                        "text": "_{0}_ \n*'{1}'*\nCейчас".format(*[author['text'] for author in book['author']], book['book_name']) +
+                                (f" в {book['place']}" if book['status'] == 'online' else f" у @{book['place']}")
                         # f"<slack://user?team={team_id}&id={str(book[7])}|:speech_balloon:>")
                     } for book in books[start:min(start + 10, books_count)]]
             },

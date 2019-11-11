@@ -48,7 +48,7 @@ class LibraryBot(BlockKit):
             url=f'{base_url}/api/?',
             json={
                 "user_name": user_name,
-                "use_id": user_id
+                "user_id": user_id
             }
         )
 
