@@ -70,7 +70,7 @@ class BlockKit:
             url=f'{base_url}/api/get_russian_tags',
         ).json()
         menu_options = {}
-        comp = re.compile(rf'{pattern}')
+        comp = re.compile(rf"{pattern}", re.UNICODE)
         if len(pattern) > 1:
             #TODO: normal length
             menu_options = {
@@ -82,7 +82,7 @@ class BlockKit:
                             "emoji": True
                         },
                         "value": value
-                    } for text, value in response.items() if bool(comp.search(text))
+                    } for text, value in response.items() if bool(comp.search(text.lower()))
                 ]
             }
         return menu_options
