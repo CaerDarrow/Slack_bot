@@ -2,7 +2,7 @@ from database import LibraryDB
 from pyzbar import pyzbar
 import requests
 from PIL import Image
-
+import re
 
 class BlockKit:
     def __init__(self):
@@ -70,6 +70,7 @@ class BlockKit:
             url=f'{base_url}/api/get_russian_tags',
         ).json()
         menu_options = {}
+        comp = re.compile(rf'{pattern}')
         if len(pattern) > 1:
             #TODO: normal length
             menu_options = {
@@ -77,11 +78,11 @@ class BlockKit:
                     {
                         "text": {
                             "type": "plain_text",
-                            "text": text.decode('utf-8'),
+                            "text": text,
                             "emoji": True
                         },
                         "value": value
-                    } for text, value in response.items() if pattern in text.lower().decode('utf-8')
+                    } for text, value in response.items() if bool(comp.search(text))
                 ]
             }
         return menu_options
