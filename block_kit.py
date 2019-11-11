@@ -69,16 +69,17 @@ class BlockKit:
         response = requests.get(
             url=f'{base_url}/api/get_russian_tags',
         ).json()
+        #TODO: normal length
         menu_options = {
             "options": [
                 {
                     "text": {
                         "type": "plain_text",
-                        "text": text if len(text) < 75 else f'{text}...',
+                        "text": text if len(text) < 75 else f'{text[:75]}...',
                         "emoji": True
                     },
                     "value": value
-                } for text, value in response.items() if pattern in text.lower()[:75]
+                } for text, value in response.items() if pattern in text.lower()
             ]
         }
         return menu_options
