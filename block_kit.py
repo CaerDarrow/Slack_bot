@@ -77,11 +77,11 @@ class BlockKit:
                     {
                         "text": {
                             "type": "plain_text",
-                            "text": text.encode('utf-8'),
+                            "text": text.decode('utf-8'),
                             "emoji": True
                         },
                         "value": value
-                    } for text, value in response.items() if pattern in text.lower().encode('utf-8')
+                    } for text, value in response.items() if pattern in text.lower().decode('utf-8')
                 ]
             }
         return menu_options
