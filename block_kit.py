@@ -69,19 +69,21 @@ class BlockKit:
         response = requests.get(
             url=f'{base_url}/api/get_russian_tags',
         ).json()
-        #TODO: normal length
-        menu_options = {
-            "options": [
-                {
-                    "text": {
-                        "type": "plain_text",
-                        "text": text if len(text) < 75 else f'{text[:75]}...',
-                        "emoji": True
-                    },
-                    "value": value
-                } for text, value in response.items() if pattern in text.lower()
-            ]
-        }
+        menu_options = {}
+        if len(pattern) > 2:
+            #TODO: normal length
+            menu_options = {
+                "options": [
+                    {
+                        "text": {
+                            "type": "plain_text",
+                            "text": text if len(text) < 75 else f'{text[:75]}...',
+                            "emoji": True
+                        },
+                        "value": value
+                    } for text, value in response.items() if pattern in text.lower()
+                ]
+            }
         return menu_options
 
     def get_search_message(self):
@@ -112,7 +114,7 @@ class BlockKit:
                         "text": "Поиск...",
                         "emoji": True
                     },
-                    "min_query_length": 2
+                    "min_query_length": 3
                 }
             }
         ]
