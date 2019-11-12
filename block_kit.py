@@ -85,6 +85,7 @@ class BlockKit:
                 } for text, value in response.items() if pattern in text.lower()
             ]
         }
+        print(menu_options)
         return menu_options
 
     def get_search_message(self):
