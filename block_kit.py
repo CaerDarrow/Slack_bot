@@ -68,7 +68,7 @@ class BlockKit:
         response = requests.get(
             url=f'{base_url}/api/get_russian_tags',
         ).json()
-        print(pattern, response.keys())
+        print(pattern)
         for text, value in response.items():
             if pattern in text.lower():
                 print(text, value)
