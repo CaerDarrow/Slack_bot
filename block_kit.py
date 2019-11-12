@@ -74,7 +74,7 @@ class BlockKit:
                 url=f'{base_url}/api/get_russian_tags',
             ).json()
             for text, value in response.items():
-                val = hashlib.md5(value)
+                val = hashlib.md5(value.encode('utf-8')).hexdigest()
                 self.options.setdefault(val, value)
                 self.tags.setdefault(text, val)
 
