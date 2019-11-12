@@ -83,7 +83,7 @@ class BlockKit:
             "options": []
         }
         self.update_tags()
-        for text, value in self.tags:
+        for text, value in self.tags.items():
             if pattern in text.lower():
                 menu_options['options'].append(
                     {
