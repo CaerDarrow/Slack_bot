@@ -1,5 +1,5 @@
 from database import LibraryDB
-from pyzbar import pyzbar
+# from pyzbar import pyzbar
 import requests
 from PIL import Image
 
@@ -10,58 +10,58 @@ class BlockKit:
         self.db = LibraryDB()
         self.options = {}
 
-    def recognize_book(self, response, user_id, team_id):
-        blocks = []
-        image = Image.open(response)
-        for qr in pyzbar.decode(image):
-            code = qr.data.decode('utf-8')
-            # TODO: API
-            book = self.db.get_book_by_id(code)
-            if book[5]:
-                blocks += [
-                    {
-                        "type": "section",
-                        "text": {
-                            "type": "mrkdwn",
-                            "text": f"О! Это же _{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*, хочешь взять ее?"
-                        },
-                        "accessory": {
-                            "type": "button",
-                            "action_id": "get_book",
-                            "text": {
-                                "type": "plain_text",
-                                "text": "Беру!",
-                                "emoji": True
-                            },
-                            "value": f"{code}"
-                        }
-                    }
-                ]
-            elif str(book[7]) != user_id:
-                blocks = [
-                    {
-                        "type": "section",
-                        "text": {
-                            "type": "mrkdwn",
-                            "text": f"А, это _{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*, кажется @{str(book[6])}"
-                            f"забыл вернуть ее, напиши ему, пожалуйста <slack://user?team={team_id}&id={str(book[7])}|:speech_balloon:>"
-                        },
-                    }
-                ]
-            else:
-                blocks += self.get_return_book_block(code)
-
-        if not blocks:
-            blocks = [
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": f"Я не знаю что это(, попробуй еще раз."
-                    }
-                }
-            ]
-        return blocks
+    # def recognize_book(self, response, user_id, team_id):
+    #     blocks = []
+    #     image = Image.open(response)
+    #     for qr in pyzbar.decode(image):
+    #         code = qr.data.decode('utf-8')
+    #         # TODO: API
+    #         book = self.db.get_book_by_id(code)
+    #         if book[5]:
+    #             blocks += [
+    #                 {
+    #                     "type": "section",
+    #                     "text": {
+    #                         "type": "mrkdwn",
+    #                         "text": f"О! Это же _{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*, хочешь взять ее?"
+    #                     },
+    #                     "accessory": {
+    #                         "type": "button",
+    #                         "action_id": "get_book",
+    #                         "text": {
+    #                             "type": "plain_text",
+    #                             "text": "Беру!",
+    #                             "emoji": True
+    #                         },
+    #                         "value": f"{code}"
+    #                     }
+    #                 }
+    #             ]
+    #         elif str(book[7]) != user_id:
+    #             blocks = [
+    #                 {
+    #                     "type": "section",
+    #                     "text": {
+    #                         "type": "mrkdwn",
+    #                         "text": f"А, это _{str(book[1])} {str(book[2])}_ *'{str(book[3])}'*, кажется @{str(book[6])}"
+    #                         f"забыл вернуть ее, напиши ему, пожалуйста <slack://user?team={team_id}&id={str(book[7])}|:speech_balloon:>"
+    #                     },
+    #                 }
+    #             ]
+    #         else:
+    #             blocks += self.get_return_book_block(code)
+    #
+    #     if not blocks:
+    #         blocks = [
+    #             {
+    #                 "type": "section",
+    #                 "text": {
+    #                     "type": "mrkdwn",
+    #                     "text": f"Я не знаю что это(, попробуй еще раз."
+    #                 }
+    #             }
+    #         ]
+    #     return blocks
 
     def get_menu_options(self, pattern):
         base_url = 'http://42lib.site'
