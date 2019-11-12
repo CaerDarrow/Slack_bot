@@ -1,12 +1,11 @@
 from flask import Flask, request, make_response, Response
-from flask_ngrok import run_with_ngrok
+# from flask_ngrok import run_with_ngrok
 from library_bot import LibraryBot
 import requests
 import json
 
 # Flask webserver for incoming traffic from Slack
 app = Flask(__name__)
-run_with_ngrok(app)
 bot = LibraryBot()
 
 @app.route("/slack/message_options", methods=["POST"])

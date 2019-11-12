@@ -71,7 +71,7 @@ class BlockKit:
         print(pattern, response.keys())
         for text, value in response.items():
             if pattern in text.lower():
-                print(text)
+                print(text, value)
         #TODO: normal length
         menu_options = {
             "options": [
