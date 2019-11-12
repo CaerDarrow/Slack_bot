@@ -68,6 +68,7 @@ class BlockKit:
         response = requests.get(
             url=f'{base_url}/api/get_russian_tags',
         ).json()
+        print(pattern, response.values())
         #TODO: normal length
         menu_options = {
             "options": [
