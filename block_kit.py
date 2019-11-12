@@ -1,6 +1,8 @@
 from database import LibraryDB
 # from pyzbar import pyzbar
 import requests
+import hashlib
+from time import time
 from PIL import Image
 
 class BlockKit:
@@ -8,7 +10,9 @@ class BlockKit:
         self.username = "library_bot"
         self.icon_emoji = ":robot_face:"
         self.db = LibraryDB()
+        self.tags = {}
         self.options = {}
+        self.time = time()
 
     # def recognize_book(self, response, user_id, team_id):
     #     blocks = []
@@ -63,28 +67,35 @@ class BlockKit:
     #         ]
     #     return blocks
 
+    def update_tags(self):
+        if time() - self.time > 5.0:
+            base_url = 'http://42lib.site'
+            response = requests.get(
+                url=f'{base_url}/api/get_russian_tags',
+            ).json()
+            for text, value in response.items():
+                val = hashlib.md5(value)
+                self.options.setdefault(val, value)
+                self.tags.setdefault(text, val)
+
     def get_menu_options(self, pattern):
-        base_url = 'http://42lib.site'
-        response = requests.get(
-            url=f'{base_url}/api/get_russian_tags',
-        ).json()
-        print(pattern)
-        for text, value in response.items():
-            if pattern in text.lower():
-                print(text, value)
-        #TODO: normal length
         menu_options = {
-            "options": [
-                {
-                    "text": {
-                        "type": "plain_text",
-                        "text": value[:20],
-                        "emoji": True
-                    },
-                    "value": value
-                } for text, value in response.items() if pattern in text.lower()
-            ]
+            "options": []
         }
+        self.update_tags()
+        for text, value in self.tags:
+            if pattern in text.lower():
+                menu_options['options'].append(
+                    {
+                        "text": {
+                            "type": "plain_text",
+                            "text": text,
+                            "emoji": True
+                        },
+                        "value": value
+                    }
+                )
+        #TODO: normal length
         print(menu_options)
         return menu_options
 
@@ -124,15 +135,16 @@ class BlockKit:
     def get_book_list(self, tag, team_id, start):
         base_url = 'http://42lib.site'
         books = list(requests.get(
-            url=f"{base_url}/api/tag_{tag}",
+            url=f"{base_url}/api/tag_{}",
         ).json().values())
         books_count = len(books)
         book_list = [
             {
+                "block_id": tag,
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"#{tag}"
+                    "text": f"#{self.tags[tag]}"
                 },
                 "fields": [
                     {
@@ -179,7 +191,7 @@ class BlockKit:
         for section in blocks:
             if "elements" not in section.keys() or "elements" in section.keys()\
                     and section["elements"][0]["action_id"] != action_id:
-                if "text" in section.keys() and section["text"]["text"][1:] == tag:
+                if "text" in section.keys() and section["block_id"] == tag:
                     new_blocks += book_list
                 else:
                     new_blocks.append(section)
@@ -376,7 +388,7 @@ class BlockKit:
     def hide_books(self, action_value, blocks):
         new_blocks = []
         for section in blocks:
-            if "text" in section.keys() and section["text"]["text"][1:] == action_value:
+            if section["block_id"] == action_value:
                 continue
             elif "elements" in section.keys():
                 if section["elements"][0]['value'] == action_value:
