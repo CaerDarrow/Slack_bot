@@ -74,7 +74,7 @@ class BlockKit:
                 {
                     "text": {
                         "type": "plain_text",
-                        "text": text[:10],
+                        "text": text[:20],
                         "emoji": True
                     },
                     "value": value
