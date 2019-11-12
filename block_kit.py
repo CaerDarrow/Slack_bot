@@ -78,7 +78,7 @@ class BlockKit:
                         "emoji": True
                     },
                     "value": value
-                } for text, value in response.items() if pattern in text.lower()
+                } for text, value in response.items() if pattern in text
             ]
         }
         return menu_options
